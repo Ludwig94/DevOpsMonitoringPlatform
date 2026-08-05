@@ -1,0 +1,262 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Monitoring.Api.Data;
+using Monitoring.Api.DTOs;
+using Monitoring.Api.Models;
+using Monitoring.Api.Services;
+
+namespace Monitoring.Api.Tests;
+
+public class MonitoringServiceTests
+{
+    private readonly ApplicationDbContext _dbContext;
+    private readonly Mock<ILogger<MonitoringService>> _mockLogger;
+    private readonly MonitoringService _service;
+
+    public MonitoringServiceTests()
+    {
+        // Use in-memory database for testing
+        var options = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _dbContext = new ApplicationDbContext(options);
+        _mockLogger = new Mock<ILogger<MonitoringService>>();
+        _service = new MonitoringService(_dbContext, _mockLogger.Object);
+    }
+
+    #region GetAllTargetsAsync Tests
+
+    [Fact]
+    public async Task GetAllTargetsAsync_WithNoTargets_ReturnsEmptyList()
+    {
+        // Arrange
+        var emptyDb = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+        var emptyDbContext = new ApplicationDbContext(emptyDb);
+        var service = new MonitoringService(emptyDbContext, _mockLogger.Object);
+
+        // Act
+        var result = await service.GetAllTargetsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Empty(result);
+    }
+
+    [Fact]
+    public async Task GetAllTargetsAsync_WithTargets_ReturnsAllTargets()
+    {
+        // Arrange
+        var target1 = new MonitoringTarget { Name = "Google", Url = "https://google.com", MonitoringInterval = 60, IsActive = true };
+        var target2 = new MonitoringTarget { Name = "GitHub", Url = "https://github.com", MonitoringInterval = 120, IsActive = true };
+
+        _dbContext.MonitoringTargets.AddRange(target1, target2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetAllTargetsAsync();
+
+        // Assert
+        Assert.NotNull(result);
+        var targetList = result.ToList();
+        Assert.Equal(2, targetList.Count);
+        Assert.True(targetList.Any(t => t.Name == "Google"));
+        Assert.True(targetList.Any(t => t.Name == "GitHub"));
+    }
+
+    [Fact]
+    public async Task GetAllTargetsAsync_ReturnsTargetsSortedByName()
+    {
+        // Arrange
+        var target1 = new MonitoringTarget { Name = "Zebra", Url = "https://zebra.com", MonitoringInterval = 60, IsActive = true };
+        var target2 = new MonitoringTarget { Name = "Apple", Url = "https://apple.com", MonitoringInterval = 60, IsActive = true };
+
+        _dbContext.MonitoringTargets.AddRange(target1, target2);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetAllTargetsAsync();
+
+        // Assert
+        var targetList = result.ToList();
+        Assert.Equal("Apple", targetList[0].Name);
+        Assert.Equal("Zebra", targetList[1].Name);
+    }
+
+    #endregion
+
+    #region GetTargetByIdAsync Tests
+
+    [Fact]
+    public async Task GetTargetByIdAsync_WithValidId_ReturnsTarget()
+    {
+        // Arrange
+        var target = new MonitoringTarget { Name = "Google", Url = "https://google.com", MonitoringInterval = 60, IsActive = true };
+        _dbContext.MonitoringTargets.Add(target);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.GetTargetByIdAsync(target.Id);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Google", result.Name);
+        Assert.Equal("https://google.com", result.Url);
+    }
+
+    [Fact]
+    public async Task GetTargetByIdAsync_WithInvalidId_ReturnsNull()
+    {
+        // Act
+        var result = await _service.GetTargetByIdAsync(999);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    #endregion
+
+    #region CreateTargetAsync Tests
+
+    [Fact]
+    public async Task CreateTargetAsync_WithValidDto_CreatesAndReturnsTarget()
+    {
+        // Arrange
+        var createDto = new CreateMonitoringTargetDto
+        {
+            Name = "Test Site",
+            Url = "https://test.com",
+            MonitoringInterval = 60
+        };
+
+        // Act
+        var result = await _service.CreateTargetAsync(createDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Test Site", result.Name);
+        Assert.Equal("https://test.com", result.Url);
+        Assert.Equal(60, result.MonitoringInterval);
+        Assert.True(result.IsActive);
+
+        // Verify it was saved to database
+        var savedTarget = await _dbContext.MonitoringTargets.FirstOrDefaultAsync(t => t.Name == "Test Site");
+        Assert.NotNull(savedTarget);
+    }
+
+    [Fact]
+    public async Task CreateTargetAsync_SetsTimestamps()
+    {
+        // Arrange
+        var createDto = new CreateMonitoringTargetDto
+        {
+            Name = "Test Site",
+            Url = "https://test.com",
+            MonitoringInterval = 60
+        };
+        var beforeCreation = DateTime.UtcNow;
+
+        // Act
+        var result = await _service.CreateTargetAsync(createDto);
+        var afterCreation = DateTime.UtcNow;
+
+        // Assert
+        Assert.True(result.CreatedAt >= beforeCreation && result.CreatedAt <= afterCreation);
+        Assert.True(result.UpdatedAt >= beforeCreation && result.UpdatedAt <= afterCreation);
+    }
+
+    #endregion
+
+    #region UpdateTargetAsync Tests
+
+    [Fact]
+    public async Task UpdateTargetAsync_WithValidId_UpdatesTarget()
+    {
+        // Arrange
+        var target = new MonitoringTarget { Name = "Old Name", Url = "https://old.com", MonitoringInterval = 60, IsActive = true };
+        _dbContext.MonitoringTargets.Add(target);
+        await _dbContext.SaveChangesAsync();
+
+        var updateDto = new UpdateMonitoringTargetDto
+        {
+            Name = "New Name",
+            Url = "https://new.com"
+        };
+
+        // Act
+        var result = await _service.UpdateTargetAsync(target.Id, updateDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("New Name", result.Name);
+        Assert.Equal("https://new.com", result.Url);
+    }
+
+    [Fact]
+    public async Task UpdateTargetAsync_WithInvalidId_ReturnsNull()
+    {
+        // Arrange
+        var updateDto = new UpdateMonitoringTargetDto { Name = "New Name" };
+
+        // Act
+        var result = await _service.UpdateTargetAsync(999, updateDto);
+
+        // Assert
+        Assert.Null(result);
+    }
+
+    [Fact]
+    public async Task UpdateTargetAsync_WithPartialData_UpdatesOnlyProvidedFields()
+    {
+        // Arrange
+        var target = new MonitoringTarget { Name = "Original", Url = "https://original.com", MonitoringInterval = 60, IsActive = true };
+        _dbContext.MonitoringTargets.Add(target);
+        await _dbContext.SaveChangesAsync();
+
+        var updateDto = new UpdateMonitoringTargetDto { Name = "Updated" };
+
+        // Act
+        var result = await _service.UpdateTargetAsync(target.Id, updateDto);
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.Equal("Updated", result.Name);
+        Assert.Equal("https://original.com", result.Url); // Should not change
+    }
+
+    #endregion
+
+    #region DeleteTargetAsync Tests
+
+    [Fact]
+    public async Task DeleteTargetAsync_WithValidId_DeletesTarget()
+    {
+        // Arrange
+        var target = new MonitoringTarget { Name = "To Delete", Url = "https://delete.com", MonitoringInterval = 60, IsActive = true };
+        _dbContext.MonitoringTargets.Add(target);
+        await _dbContext.SaveChangesAsync();
+
+        // Act
+        var result = await _service.DeleteTargetAsync(target.Id);
+
+        // Assert
+        Assert.True(result);
+        var deletedTarget = await _dbContext.MonitoringTargets.FirstOrDefaultAsync(t => t.Id == target.Id);
+        Assert.Null(deletedTarget);
+    }
+
+    [Fact]
+    public async Task DeleteTargetAsync_WithInvalidId_ReturnsFalse()
+    {
+        // Act
+        var result = await _service.DeleteTargetAsync(999);
+
+        // Assert
+        Assert.False(result);
+    }
+
+    #endregion
+}

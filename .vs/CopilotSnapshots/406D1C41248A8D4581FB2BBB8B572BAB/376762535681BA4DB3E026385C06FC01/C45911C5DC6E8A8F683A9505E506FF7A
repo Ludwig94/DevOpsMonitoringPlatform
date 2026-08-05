@@ -1,0 +1,80 @@
+﻿# Project Status
+
+## Project Name
+DevOps Monitoring Platform
+
+## Goal
+Build a production-like monitoring platform that can monitor websites and APIs, collect uptime statistics, measure response times, and display monitoring data through a dashboard.
+
+The project is created as a portfolio project to demonstrate modern .NET development, cloud, and DevOps skills.
+
+---
+
+# Current Phase
+
+Phase 1 - COMPLETE ✅
+Phase 2 - Core API Endpoints (IN PROGRESS)
+
+---
+
+# Completed
+
+✅ Created ASP.NET Core Web API project  
+✅ Added Swagger/OpenAPI documentation  
+✅ Created GitHub repository  
+✅ Connected local repository to GitHub  
+✅ Added initial project structure  
+✅ **Phase 1 Complete**: Created folder structure, database models, DTOs, EF Core configuration, initial migration
+✅ **Phase 2 Complete**: Implemented MonitoringTargetsController with CRUD endpoints, MonitoringService with business logic, ExceptionHandlingMiddleware for global error handling
+✅ Created unit tests with xUnit + Moq (12 tests - all passing)
+
+---
+
+# Currently Working On
+
+Setting up the project foundation and architecture.
+
+---
+
+# Next Steps
+
+1. Define backend architecture
+2. Create database models
+3. Configure Entity Framework Core
+4. Create SQL Server database
+5. Build Monitor CRUD API
+6. Create background monitoring service
+7. Build Angular dashboard
+8. Add Docker support
+9. Deploy to Azure
+10. Add CI/CD pipeline
+
+---
+
+# Technology Stack
+
+## Backend
+- ASP.NET Core Web API (.NET 10)
+- C#
+- Entity Framework Core
+- SQL Server
+
+## Frontend
+- Angular
+- TypeScript
+
+## DevOps
+- GitHub
+- Docker
+- Azure
+- GitHub Actions
+
+---
+
+# Architecture Decisions
+
+- Use Controller-based Web API
+- Use service layer for business logic
+- Use dependency injection
+- Keep controllers thin
+- Use DTOs for API communication
