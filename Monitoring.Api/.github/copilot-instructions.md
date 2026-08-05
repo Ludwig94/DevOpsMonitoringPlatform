@@ -68,3 +68,14 @@ Write unit tests for important business logic.
 ## Development Goal
 
 Prioritize production-quality code suitable for a portfolio project and junior developer job applications.
+
+## Project Documentation
+
+Before making changes:
+- Read PROJECT_STATUS.md to understand the current project state.
+- Do not implement features that are already completed.
+- Follow the planned development phases.
+
+After completing a major feature:
+- Suggest updating PROJECT_STATUS.md.
+- Suggest an appropriate Git commit message.
