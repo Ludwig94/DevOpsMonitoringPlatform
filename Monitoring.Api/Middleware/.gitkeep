@@ -1,0 +1,8 @@
+# Middleware folder
+# Purpose: Contains HTTP middleware components for cross-cutting concerns
+# Responsibilities:
+# - Handle global exception handling
+# - Implement request/response logging
+# - Add custom HTTP pipeline behaviors
+# - Execute before/after controller actions
+# Examples: ExceptionHandlingMiddleware

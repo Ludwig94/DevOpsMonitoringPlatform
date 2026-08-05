@@ -1,0 +1,9 @@
+# Services folder
+# Purpose: Contains business logic and application services
+# Responsibilities:
+# - Implement core business rules
+# - Orchestrate multiple operations
+# - Interact with data repositories
+# - Provide reusable functionality
+# - Handle error scenarios
+# Examples: MonitoringService, HealthCheckService, ResultAggregationService

@@ -1,0 +1,8 @@
+# Data folder
+# Purpose: Contains database configuration and Entity Framework Core setup
+# Responsibilities:
+# - Define ApplicationDbContext
+# - Configure entity mappings and relationships
+# - Contain database migrations
+# - Provide repository patterns if needed
+# Examples: ApplicationDbContext, Migration files

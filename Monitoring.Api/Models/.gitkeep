@@ -1,0 +1,7 @@
+# Models folder
+# Purpose: Contains database entity models
+# Responsibilities:
+# - Define data structures that map to database tables
+# - Include properties, relationships, and validation attributes
+# - Represent the domain of the application
+# Examples: MonitoringTarget, MonitoringResult

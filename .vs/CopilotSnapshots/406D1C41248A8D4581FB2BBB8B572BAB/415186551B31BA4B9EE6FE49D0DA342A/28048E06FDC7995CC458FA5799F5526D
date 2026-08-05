@@ -1,4 +1,4 @@
-using Monitoring.Api.Data;
+﻿using Monitoring.Api.Data;
 using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);

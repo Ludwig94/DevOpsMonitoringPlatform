@@ -1,4 +1,4 @@
-{
+﻿{
   "ConnectionStrings": {
     "DefaultConnection": "Server=(localdb)\\mssqllocaldb;Database=DevOpsMonitoringDb;Trusted_Connection=True;TrustServerCertificate=True"
   },

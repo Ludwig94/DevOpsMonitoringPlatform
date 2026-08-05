@@ -1,0 +1,8 @@
+# DTOs folder
+# Purpose: Contains Data Transfer Objects for API communication
+# Responsibilities:
+# - Define request/response payload structures
+# - Separate API contracts from internal domain models
+# - Include only fields needed for API consumers
+# - Hide internal details and database relationships
+# Examples: CreateMonitoringTargetDto, MonitoringTargetResponseDto, MonitoringResultDto

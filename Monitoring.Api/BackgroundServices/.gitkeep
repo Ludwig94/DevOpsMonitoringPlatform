@@ -1,0 +1,8 @@
+# BackgroundServices folder
+# Purpose: Contains long-running background tasks and hosted services
+# Responsibilities:
+# - Implement IHostedService for background job execution
+# - Handle periodic monitoring checks
+# - Manage service lifecycle (start/stop)
+# - Implement graceful shutdown
+# Examples: HealthCheckHostedService

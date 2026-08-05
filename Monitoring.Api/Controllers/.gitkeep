@@ -1,0 +1,8 @@
+# Controllers folder
+# Purpose: Contains API endpoint controllers that handle HTTP requests and responses
+# Responsibilities:
+# - Route incoming HTTP requests
+# - Validate request parameters
+# - Call appropriate services for business logic
+# - Return DTOs in API responses
+# - Keep logic minimal (delegate to services)
