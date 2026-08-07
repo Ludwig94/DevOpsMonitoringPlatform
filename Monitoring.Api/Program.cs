@@ -1,3 +1,4 @@
+using Monitoring.Api.BackgroundServices;
 using Monitoring.Api.Data;
 using Monitoring.Api.Middleware;
 using Monitoring.Api.Services;
@@ -11,6 +12,12 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 // Register application services
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+
+// Register HTTP client factory for health checks with resilience
+builder.Services.AddHttpClient<IHealthCheckService, HealthCheckService>();
+
+// Register background service for periodic health checks
+builder.Services.AddHostedService<HealthCheckHostedService>();
 
 builder.Services.AddControllers();
 

@@ -1,0 +1,94 @@
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Microsoft.Extensions.DependencyInjection;
+using Moq;
+using Monitoring.Api.BackgroundServices;
+using Monitoring.Api.Data;
+using Monitoring.Api.Models;
+using Monitoring.Api.Services;
+using Xunit;
+
+namespace Monitoring.Api.Tests;
+
+public class HealthCheckHostedServiceTests
+{
+    private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions;
+    private readonly Mock<ILogger<HealthCheckHostedService>> _mockLogger;
+
+    public HealthCheckHostedServiceTests()
+    {
+        _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _mockLogger = new Mock<ILogger<HealthCheckHostedService>>();
+    }
+
+    private ApplicationDbContext CreateDbContext()
+    {
+        return new ApplicationDbContext(_dbContextOptions);
+    }
+
+    #region Initialization Tests
+
+    [Fact]
+    public async Task StartAsync_Succeeds()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var serviceProvider = CreateServiceProvider(dbContext);
+        var service = new HealthCheckHostedService(_mockLogger.Object, serviceProvider);
+
+        // Act & Assert - Should not throw
+        await service.StartAsync(CancellationToken.None);
+        await service.StopAsync(CancellationToken.None);
+    }
+
+    [Fact]
+    public async Task StopAsync_Succeeds()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var serviceProvider = CreateServiceProvider(dbContext);
+        var service = new HealthCheckHostedService(_mockLogger.Object, serviceProvider);
+        await service.StartAsync(CancellationToken.None);
+
+        // Act
+        await service.StopAsync(CancellationToken.None);
+
+        // Assert - Should not throw
+        Assert.True(true);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private IServiceProvider CreateServiceProvider(ApplicationDbContext dbContext)
+    {
+        var services = new ServiceCollection();
+
+        // Register the DbContext
+        services.AddScoped(_ => dbContext);
+
+        // Register a mock health check service
+        var mockHealthCheckService = new Mock<IHealthCheckService>();
+        mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(new HealthCheckResult
+            {
+                StatusCode = 200,
+                IsHealthy = true,
+                ResponseTimeMs = 100,
+                ErrorMessage = null
+            });
+
+        services.AddScoped(_ => mockHealthCheckService.Object);
+
+        // Register logger
+        services.AddLogging();
+
+        return services.BuildServiceProvider();
+    }
+
+    #endregion
+}

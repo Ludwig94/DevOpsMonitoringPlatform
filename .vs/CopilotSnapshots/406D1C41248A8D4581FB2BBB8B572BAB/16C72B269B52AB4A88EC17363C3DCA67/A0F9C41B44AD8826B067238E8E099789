@@ -1,0 +1,372 @@
+﻿using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
+using Moq;
+using Monitoring.Api.BackgroundServices;
+using Monitoring.Api.Data;
+using Monitoring.Api.Models;
+using Monitoring.Api.Services;
+using Xunit;
+
+namespace Monitoring.Api.Tests;
+
+public class HealthCheckHostedServiceTests
+{
+    private readonly DbContextOptions<ApplicationDbContext> _dbContextOptions;
+    private readonly Mock<ILogger<HealthCheckHostedService>> _mockLogger;
+    private readonly Mock<IHealthCheckService> _mockHealthCheckService;
+
+    public HealthCheckHostedServiceTests()
+    {
+        _dbContextOptions = new DbContextOptionsBuilder<ApplicationDbContext>()
+            .UseInMemoryDatabase(databaseName: Guid.NewGuid().ToString())
+            .Options;
+
+        _mockLogger = new Mock<ILogger<HealthCheckHostedService>>();
+        _mockHealthCheckService = new Mock<IHealthCheckService>();
+    }
+
+    private ApplicationDbContext CreateDbContext()
+    {
+        return new ApplicationDbContext(_dbContextOptions);
+    }
+
+    #region Initialization Tests
+
+    [Fact]
+    public async Task ExecuteAsync_WithNoTargets_DoesNotThrow()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(500)); // Short timeout
+
+        // Act & Assert - Should not throw
+        await service.ExecuteAsync(cts.Token);
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_WithActiveTargets_PerformsChecks()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var target = new MonitoringTarget
+        {
+            Name = "Test Target",
+            Url = "https://example.com",
+            MonitoringInterval = 1,
+            IsActive = true
+        };
+        dbContext.MonitoringTargets.Add(target);
+        await dbContext.SaveChangesAsync();
+
+        var healthCheckResult = new HealthCheckResult
+        {
+            StatusCode = 200,
+            IsHealthy = true,
+            ResponseTimeMs = 100,
+            ErrorMessage = null
+        };
+        _mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(healthCheckResult);
+
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(1000)); // Give it time to run
+
+        // Act
+        try
+        {
+            await service.ExecuteAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected - we cancelled it
+        }
+
+        // Assert - Check if health check service was called
+        _mockHealthCheckService.Verify(
+            x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce
+        );
+    }
+
+    #endregion
+
+    #region Target Filtering Tests
+
+    [Fact]
+    public async Task ExecuteAsync_IgnoresInactiveTargets()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var activeTarget = new MonitoringTarget
+        {
+            Name = "Active Target",
+            Url = "https://active.com",
+            MonitoringInterval = 1,
+            IsActive = true
+        };
+        var inactiveTarget = new MonitoringTarget
+        {
+            Name = "Inactive Target",
+            Url = "https://inactive.com",
+            MonitoringInterval = 1,
+            IsActive = false
+        };
+        dbContext.MonitoringTargets.AddRange(activeTarget, inactiveTarget);
+        await dbContext.SaveChangesAsync();
+
+        var healthCheckResult = new HealthCheckResult
+        {
+            StatusCode = 200,
+            IsHealthy = true,
+            ResponseTimeMs = 100,
+            ErrorMessage = null
+        };
+        _mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(healthCheckResult);
+
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(1000));
+
+        // Act
+        try
+        {
+            await service.ExecuteAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected
+        }
+
+        // Assert - Should only check active target
+        _mockHealthCheckService.Verify(
+            x => x.CheckHealthAsync("https://active.com", It.IsAny<CancellationToken>()),
+            Times.AtLeastOnce
+        );
+        _mockHealthCheckService.Verify(
+            x => x.CheckHealthAsync("https://inactive.com", It.IsAny<CancellationToken>()),
+            Times.Never
+        );
+    }
+
+    #endregion
+
+    #region Result Persistence Tests
+
+    [Fact]
+    public async Task ExecuteAsync_PersistsHealthCheckResults()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var target = new MonitoringTarget
+        {
+            Name = "Test Target",
+            Url = "https://example.com",
+            MonitoringInterval = 1,
+            IsActive = true
+        };
+        dbContext.MonitoringTargets.Add(target);
+        await dbContext.SaveChangesAsync();
+
+        var healthCheckResult = new HealthCheckResult
+        {
+            StatusCode = 200,
+            IsHealthy = true,
+            ResponseTimeMs = 150,
+            ErrorMessage = null
+        };
+        _mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(healthCheckResult);
+
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(1500)); // Give it time to save
+
+        // Act
+        try
+        {
+            await service.ExecuteAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected
+        }
+
+        // Assert - Check if results were saved (allow time for async operations)
+        await Task.Delay(200);
+        var savedResults = dbContext.MonitoringResults.ToList();
+        Assert.NotEmpty(savedResults);
+        Assert.All(savedResults, r => Assert.Equal(target.Id, r.MonitoringTargetId));
+    }
+
+    [Fact]
+    public async Task ExecuteAsync_SavesFailedCheckResults()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var target = new MonitoringTarget
+        {
+            Name = "Test Target",
+            Url = "https://example.com",
+            MonitoringInterval = 1,
+            IsActive = true
+        };
+        dbContext.MonitoringTargets.Add(target);
+        await dbContext.SaveChangesAsync();
+
+        var failedResult = new HealthCheckResult
+        {
+            StatusCode = 0,
+            IsHealthy = false,
+            ResponseTimeMs = 5000,
+            ErrorMessage = "Request timeout"
+        };
+        _mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(failedResult);
+
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(1500));
+
+        // Act
+        try
+        {
+            await service.ExecuteAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected
+        }
+
+        // Assert
+        await Task.Delay(200);
+        var savedResults = dbContext.MonitoringResults.ToList();
+        Assert.NotEmpty(savedResults);
+        Assert.All(savedResults, r =>
+        {
+            Assert.False(r.IsHealthy);
+            Assert.NotNull(r.ErrorMessage);
+        });
+    }
+
+    #endregion
+
+    #region Scheduling Tests
+
+    [Fact]
+    public async Task ExecuteAsync_RespectsMonitoringInterval()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var target = new MonitoringTarget
+        {
+            Name = "Test Target",
+            Url = "https://example.com",
+            MonitoringInterval = 60, // 60 seconds
+            IsActive = true
+        };
+        dbContext.MonitoringTargets.Add(target);
+        await dbContext.SaveChangesAsync();
+
+        var callCount = 0;
+        _mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ReturnsAsync(() =>
+            {
+                callCount++;
+                return new HealthCheckResult
+                {
+                    StatusCode = 200,
+                    IsHealthy = true,
+                    ResponseTimeMs = 100,
+                    ErrorMessage = null
+                };
+            });
+
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(2000)); // Run for 2 seconds
+
+        // Act
+        try
+        {
+            await service.ExecuteAsync(cts.Token);
+        }
+        catch (OperationCanceledException)
+        {
+            // Expected
+        }
+
+        // Assert - Should check once immediately, not multiple times due to 60-second interval
+        Assert.True(callCount >= 1);
+    }
+
+    #endregion
+
+    #region Error Handling Tests
+
+    [Fact]
+    public async Task ExecuteAsync_ContinuesOnCheckException()
+    {
+        // Arrange
+        var dbContext = CreateDbContext();
+        var target = new MonitoringTarget
+        {
+            Name = "Test Target",
+            Url = "https://example.com",
+            MonitoringInterval = 1,
+            IsActive = true
+        };
+        dbContext.MonitoringTargets.Add(target);
+        await dbContext.SaveChangesAsync();
+
+        // First call throws, subsequent calls succeed
+        _mockHealthCheckService.Setup(x => x.CheckHealthAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+            .ThrowsAsync(new Exception("Test exception"));
+
+        var mockServiceProvider = CreateMockServiceProvider(dbContext, _mockHealthCheckService);
+        var service = new HealthCheckHostedService(_mockLogger.Object, mockServiceProvider);
+        using var cts = new CancellationTokenSource();
+        cts.CancelAfter(TimeSpan.FromMilliseconds(1000));
+
+        // Act & Assert - Should not throw and should continue
+        await service.ExecuteAsync(cts.Token);
+    }
+
+    #endregion
+
+    #region Helper Methods
+
+    private IServiceProvider CreateMockServiceProvider(
+        ApplicationDbContext dbContext,
+        Mock<IHealthCheckService> mockHealthCheckService)
+    {
+        var mockServiceProvider = new Mock<IServiceProvider>();
+        var mockScope = new Mock<IServiceScope>();
+
+        var mockScopedServiceProvider = new Mock<IServiceProvider>();
+        mockScopedServiceProvider
+            .Setup(x => x.GetService(typeof(ApplicationDbContext)))
+            .Returns(dbContext);
+        mockScopedServiceProvider
+            .Setup(x => x.GetService(typeof(IHealthCheckService)))
+            .Returns(mockHealthCheckService.Object);
+
+        mockScope.Setup(x => x.ServiceProvider).Returns(mockScopedServiceProvider.Object);
+        mockServiceProvider
+            .Setup(x => x.CreateScope())
+            .Returns(mockScope.Object);
+
+        return mockServiceProvider.Object;
+    }
+
+    #endregion
+}

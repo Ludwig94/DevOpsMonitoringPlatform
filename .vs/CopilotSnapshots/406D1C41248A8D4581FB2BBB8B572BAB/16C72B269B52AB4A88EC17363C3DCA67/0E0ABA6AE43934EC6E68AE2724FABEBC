@@ -1,0 +1,256 @@
+﻿using Microsoft.Extensions.Logging;
+using Moq;
+using Monitoring.Api.Services;
+using Xunit;
+
+namespace Monitoring.Api.Tests;
+
+public class HealthCheckServiceTests
+{
+    private readonly Mock<ILogger<HealthCheckService>> _mockLogger;
+    private readonly HealthCheckService _healthCheckService;
+
+    public HealthCheckServiceTests()
+    {
+        _mockLogger = new Mock<ILogger<HealthCheckService>>();
+
+        // Create a real HttpClient for testing
+        var httpClient = new HttpClient();
+        _healthCheckService = new HealthCheckService(httpClient, _mockLogger.Object);
+    }
+
+    #region CheckHealthAsync Tests - Valid URLs
+
+    [Fact]
+    public async Task CheckHealthAsync_WithSuccessfulResponse_ReturnsHealthyResult()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockHttpMessageHandler(System.Net.HttpStatusCode.OK));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://httpbin.org/status/200");
+
+        // Assert
+        Assert.NotNull(result);
+        Assert.True(result.IsSuccessful);
+        Assert.True(result.IsHealthy);
+        Assert.Equal(200, result.StatusCode);
+        Assert.Null(result.ErrorMessage);
+        Assert.True(result.ResponseTimeMs > 0);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithStatusCode201_ReturnsHealthy()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockHttpMessageHandler(System.Net.HttpStatusCode.Created));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://httpbin.org/status/201");
+
+        // Assert
+        Assert.True(result.IsHealthy);
+        Assert.Equal(201, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithStatusCode299_ReturnsHealthy()
+    {
+        // Arrange
+        // Note: 299 is not a standard HTTP status code, but should be treated as healthy (200-299)
+        using var httpClient = new HttpClient(new MockHttpMessageHandler((System.Net.HttpStatusCode)299));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://example.com");
+
+        // Assert
+        Assert.True(result.IsHealthy);
+        Assert.Equal(299, result.StatusCode);
+    }
+
+    #endregion
+
+    #region CheckHealthAsync Tests - Non-Healthy Status Codes
+
+    [Fact]
+    public async Task CheckHealthAsync_WithStatusCode300_ReturnsUnhealthy()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockHttpMessageHandler((System.Net.HttpStatusCode)300));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://example.com");
+
+        // Assert
+        Assert.False(result.IsHealthy);
+        Assert.Equal(300, result.StatusCode);
+        Assert.Null(result.ErrorMessage); // Request was successful, just unhealthy status
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithStatusCode404_ReturnsUnhealthy()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockHttpMessageHandler(System.Net.HttpStatusCode.NotFound));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://example.com/notfound");
+
+        // Assert
+        Assert.False(result.IsHealthy);
+        Assert.Equal(404, result.StatusCode);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithStatusCode500_ReturnsUnhealthy()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockHttpMessageHandler(System.Net.HttpStatusCode.InternalServerError));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://example.com/error");
+
+        // Assert
+        Assert.False(result.IsHealthy);
+        Assert.Equal(500, result.StatusCode);
+    }
+
+    #endregion
+
+    #region CheckHealthAsync Tests - Error Scenarios
+
+    [Fact]
+    public async Task CheckHealthAsync_WithEmptyUrl_ReturnsErrorResult()
+    {
+        // Arrange
+        using var httpClient = new HttpClient();
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("");
+
+        // Assert
+        Assert.False(result.IsSuccessful);
+        Assert.False(result.IsHealthy);
+        Assert.Equal(0, result.StatusCode);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.Contains("empty", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithNullUrl_ReturnsErrorResult()
+    {
+        // Arrange
+        using var httpClient = new HttpClient();
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync(null!);
+
+        // Assert
+        Assert.False(result.IsSuccessful);
+        Assert.False(result.IsHealthy);
+        Assert.Equal(0, result.StatusCode);
+        Assert.NotNull(result.ErrorMessage);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithTimeout_ReturnsTimeoutError()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockTimeoutHandler());
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://slow.example.com");
+
+        // Assert
+        Assert.False(result.IsSuccessful);
+        Assert.False(result.IsHealthy);
+        Assert.Equal(0, result.StatusCode);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.Contains("timeout", result.ErrorMessage, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public async Task CheckHealthAsync_WithHttpRequestException_ReturnsErrorResult()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockFailingHandler());
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://invalid-url.invalid");
+
+        // Assert
+        Assert.False(result.IsSuccessful);
+        Assert.False(result.IsHealthy);
+        Assert.Equal(0, result.StatusCode);
+        Assert.NotNull(result.ErrorMessage);
+        Assert.Contains("HTTP request failed", result.ErrorMessage);
+    }
+
+    #endregion
+
+    #region CheckHealthAsync Tests - Response Time Measurement
+
+    [Fact]
+    public async Task CheckHealthAsync_MeasuresResponseTime()
+    {
+        // Arrange
+        using var httpClient = new HttpClient(new MockHttpMessageHandler(System.Net.HttpStatusCode.OK));
+        var service = new HealthCheckService(httpClient, _mockLogger.Object);
+
+        // Act
+        var result = await service.CheckHealthAsync("https://example.com");
+
+        // Assert
+        Assert.True(result.ResponseTimeMs >= 0);
+        // Response time should be recorded (even if it's 0-1ms in tests)
+    }
+
+    #endregion
+
+    #region Helper Classes for Mocking HTTP
+
+    private class MockHttpMessageHandler : HttpMessageHandler
+    {
+        private readonly System.Net.HttpStatusCode _statusCode;
+
+        public MockHttpMessageHandler(System.Net.HttpStatusCode statusCode)
+        {
+            _statusCode = statusCode;
+        }
+
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            return Task.FromResult(new HttpResponseMessage(_statusCode));
+        }
+    }
+
+    private class MockTimeoutHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            // Simulate timeout by throwing OperationCanceledException
+            throw new OperationCanceledException("Request timeout simulated");
+        }
+    }
+
+    private class MockFailingHandler : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken cancellationToken)
+        {
+            // Simulate HTTP request failure
+            throw new HttpRequestException("Connection failed");
+        }
+    }
+
+    #endregion
+}
