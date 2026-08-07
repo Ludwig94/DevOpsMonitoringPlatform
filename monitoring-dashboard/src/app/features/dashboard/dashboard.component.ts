@@ -1,0 +1,95 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { RouterLink } from '@angular/router';
+import { forkJoin, Subscription, interval } from 'rxjs';
+import { switchMap, startWith } from 'rxjs/operators';
+
+import { MonitoringTargetService } from '../../core/services/monitoring-target.service';
+import { MonitoringResultService } from '../../core/services/monitoring-result.service';
+import { MonitoringTarget } from '../../core/models/monitoring-target.model';
+import { UptimeStatistics, AverageResponseTime, MonitoringResult } from '../../core/models/monitoring-result.model';
+
+interface TargetSummary {
+  target: MonitoringTarget;
+  latestResult: MonitoringResult | null;
+  uptime24h: number | null;
+  avgResponseTime: number | null;
+}
+
+@Component({
+  selector: 'app-dashboard',
+  standalone: true,
+  imports: [CommonModule, RouterLink],
+  templateUrl: './dashboard.component.html',
+  styleUrl: './dashboard.component.css'
+})
+export class DashboardComponent implements OnInit, OnDestroy {
+  summaries: TargetSummary[] = [];
+  isLoading = true;
+  errorMessage = '';
+  lastRefreshed: Date | null = null;
+
+  private readonly refreshIntervalMs = 30_000;
+  private refreshSubscription?: Subscription;
+
+  constructor(
+    private targetService: MonitoringTargetService,
+    private resultService: MonitoringResultService
+  ) {}
+
+  ngOnInit(): void {
+    // Auto-refresh every 30 seconds, starting immediately
+    this.refreshSubscription = interval(this.refreshIntervalMs)
+      .pipe(startWith(0), switchMap(() => this.targetService.getAll()))
+      .subscribe({
+        next: (targets) => this.loadSummaries(targets),
+        error: () => {
+          this.errorMessage = 'Failed to load monitoring targets. Is the backend running?';
+          this.isLoading = false;
+        }
+      });
+  }
+
+  ngOnDestroy(): void {
+    this.refreshSubscription?.unsubscribe();
+  }
+
+  private loadSummaries(targets: MonitoringTarget[]): void {
+    if (targets.length === 0) {
+      this.summaries = [];
+      this.isLoading = false;
+      this.lastRefreshed = new Date();
+      return;
+    }
+
+    const requests = targets.map(target =>
+      forkJoin({
+        results: this.resultService.getRecentResults(target.id, 1),
+        stats: this.resultService.getUptimeStats(target.id),
+        avgTime: this.resultService.getAverageResponseTime(target.id)
+      })
+    );
+
+    forkJoin(requests).subscribe({
+      next: (responses) => {
+        this.summaries = targets.map((target, i) => ({
+          target,
+          latestResult: responses[i].results[0] ?? null,
+          uptime24h: responses[i].stats.last24Hours,
+          avgResponseTime: responses[i].avgTime.averageResponseTimeMs
+        }));
+        this.isLoading = false;
+        this.lastRefreshed = new Date();
+        this.errorMessage = '';
+      },
+      error: () => {
+        this.errorMessage = 'Failed to load monitoring data.';
+        this.isLoading = false;
+      }
+    });
+  }
+
+  get totalTargets(): number { return this.summaries.length; }
+  get healthyTargets(): number { return this.summaries.filter(s => s.latestResult?.isHealthy).length; }
+  get unhealthyTargets(): number { return this.summaries.filter(s => s.latestResult && !s.latestResult.isHealthy).length; }
+}

@@ -1,0 +1,118 @@
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading target details...</p>
+</div>
+
+<div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+<ng-container *ngIf="!isLoading && target">
+
+  <!-- Header -->
+  <div class="page-header">
+    <div class="header-left">
+      <a routerLink="/targets" class="back-link">← Targets</a>
+      <h1 class="page-title">{{ target.name }}</h1>
+      <div class="status-badge"
+           [class.status-up]="currentStatus === 'up'"
+           [class.status-down]="currentStatus === 'down'"
+           [class.status-unknown]="currentStatus === 'unknown'">
+        {{ currentStatus === 'up' ? 'UP' : (currentStatus === 'down' ? 'DOWN' : 'UNKNOWN') }}
+      </div>
+    </div>
+    <a [routerLink]="['/targets', target.id, 'edit']" class="btn btn-secondary">Edit</a>
+  </div>
+
+  <!-- Target Info -->
+  <div class="info-card">
+    <div class="info-row">
+      <span class="info-label">URL</span>
+      <a [href]="target.url" target="_blank" class="info-link">{{ target.url }}</a>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Check Interval</span>
+      <span class="info-value">Every {{ target.monitoringInterval }} seconds</span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Monitoring</span>
+      <span class="status-pill" [class.pill-active]="target.isActive" [class.pill-inactive]="!target.isActive">
+        {{ target.isActive ? 'Active' : 'Inactive' }}
+      </span>
+    </div>
+    <div class="info-row">
+      <span class="info-label">Created</span>
+      <span class="info-value">{{ target.createdAt | date:'dd MMM yyyy, HH:mm' }}</span>
+    </div>
+  </div>
+
+  <!-- Uptime Statistics -->
+  <h2 class="section-title">Uptime Statistics</h2>
+  <div class="stats-grid" *ngIf="stats">
+    <div class="stat-card">
+      <span class="stat-period">Last 24 Hours</span>
+      <span class="stat-value" [ngClass]="uptimeClass(stats.last24Hours)">
+        {{ stats.last24Hours | number:'1.2-2' }}%
+      </span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-period">Last 7 Days</span>
+      <span class="stat-value" [ngClass]="uptimeClass(stats.last7Days)">
+        {{ stats.last7Days | number:'1.2-2' }}%
+      </span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-period">Last 30 Days</span>
+      <span class="stat-value" [ngClass]="uptimeClass(stats.last30Days)">
+        {{ stats.last30Days | number:'1.2-2' }}%
+      </span>
+    </div>
+    <div class="stat-card">
+      <span class="stat-period">All Time</span>
+      <span class="stat-value" [ngClass]="uptimeClass(stats.allTime)">
+        {{ stats.allTime | number:'1.2-2' }}%
+      </span>
+    </div>
+  </div>
+
+  <!-- Response Time -->
+  <div class="response-card" *ngIf="avgResponse">
+    <span class="response-label">Avg Response Time (24h)</span>
+    <span class="response-value">{{ avgResponse.averageResponseTimeMs }} ms</span>
+    <span class="response-samples">based on {{ avgResponse.sampleCount }} checks</span>
+  </div>
+
+  <!-- Recent Check History -->
+  <h2 class="section-title">Recent Checks</h2>
+  <div class="empty-state" *ngIf="recentResults.length === 0">
+    <p>No check results yet. The background service will start checking shortly.</p>
+  </div>
+
+  <div class="table-container" *ngIf="recentResults.length > 0">
+    <table class="table">
+      <thead>
+        <tr>
+          <th>Time</th>
+          <th>Status</th>
+          <th>HTTP Code</th>
+          <th>Response Time</th>
+          <th>Error</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let result of recentResults" [class.row-unhealthy]="!result.isHealthy">
+          <td>{{ result.checkedAt | date:'dd/MM/yyyy HH:mm:ss' }}</td>
+          <td>
+            <span class="status-badge"
+                  [class.status-up]="result.isHealthy"
+                  [class.status-down]="!result.isHealthy">
+              {{ result.isHealthy ? 'UP' : 'DOWN' }}
+            </span>
+          </td>
+          <td>{{ result.statusCode || '—' }}</td>
+          <td>{{ result.responseTime }}ms</td>
+          <td class="error-cell">{{ result.errorMessage || '—' }}</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+</ng-container>

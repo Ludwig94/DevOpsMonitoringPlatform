@@ -1,0 +1,89 @@
+<div class="page-header">
+  <h1 class="page-title">{{ pageTitle }}</h1>
+  <a routerLink="/targets" class="btn btn-ghost">← Back to Targets</a>
+</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading...</p>
+</div>
+
+<div class="form-card" *ngIf="!isLoading">
+  <div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+  <form (ngSubmit)="onSubmit()" #targetForm="ngForm">
+
+    <div class="form-group">
+      <label for="name" class="form-label">Name <span class="required">*</span></label>
+      <input
+        id="name"
+        type="text"
+        class="form-input"
+        [(ngModel)]="form.name"
+        name="name"
+        placeholder="e.g. My Production API"
+        required
+        minlength="1"
+        maxlength="255"
+        #nameField="ngModel"
+        [class.input-error]="nameField.invalid && nameField.touched" />
+      <span class="field-error" *ngIf="nameField.invalid && nameField.touched">
+        Name is required (1–255 characters)
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="url" class="form-label">URL <span class="required">*</span></label>
+      <input
+        id="url"
+        type="url"
+        class="form-input"
+        [(ngModel)]="form.url"
+        name="url"
+        placeholder="https://example.com"
+        required
+        #urlField="ngModel"
+        [class.input-error]="urlField.invalid && urlField.touched" />
+      <span class="field-error" *ngIf="urlField.invalid && urlField.touched">
+        A valid URL is required
+      </span>
+    </div>
+
+    <div class="form-group">
+      <label for="interval" class="form-label">
+        Monitoring Interval <span class="required">*</span>
+        <span class="form-hint"> (10 – 3600 seconds)</span>
+      </label>
+      <input
+        id="interval"
+        type="number"
+        class="form-input input-narrow"
+        [(ngModel)]="form.monitoringInterval"
+        name="monitoringInterval"
+        min="10"
+        max="3600"
+        required
+        #intervalField="ngModel"
+        [class.input-error]="intervalField.invalid && intervalField.touched" />
+      <span class="field-error" *ngIf="intervalField.invalid && intervalField.touched">
+        Interval must be between 10 and 3600 seconds
+      </span>
+    </div>
+
+    <div class="form-group" *ngIf="isEditMode">
+      <label class="form-label">Active</label>
+      <label class="toggle-label">
+        <input type="checkbox" [(ngModel)]="form.isActive" name="isActive" class="toggle-input" />
+        <span class="toggle-text">{{ form.isActive ? 'Enabled – monitoring is running' : 'Disabled – monitoring is paused' }}</span>
+      </label>
+    </div>
+
+    <div class="form-actions">
+      <a routerLink="/targets" class="btn btn-ghost">Cancel</a>
+      <button type="submit" class="btn btn-primary" [disabled]="isSaving || !isFormValid()">
+        {{ isSaving ? 'Saving...' : (isEditMode ? 'Save Changes' : 'Create Target') }}
+      </button>
+    </div>
+
+  </form>
+</div>

@@ -1,0 +1,62 @@
+<div class="page-header">
+  <h1 class="page-title">Monitoring Targets</h1>
+  <a routerLink="/targets/new" class="btn btn-primary">+ Add Target</a>
+</div>
+
+<div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+
+<div class="loading-container" *ngIf="isLoading">
+  <div class="spinner"></div>
+  <p>Loading targets...</p>
+</div>
+
+<div class="empty-state" *ngIf="!isLoading && targets.length === 0 && !errorMessage">
+  <p>No monitoring targets found.</p>
+  <a routerLink="/targets/new" class="btn btn-primary">Add your first target</a>
+</div>
+
+<div class="table-container" *ngIf="!isLoading && targets.length > 0">
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>URL</th>
+        <th>Interval</th>
+        <th>Status</th>
+        <th>Created</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngFor="let target of targets">
+        <td>
+          <a [routerLink]="['/targets', target.id]" class="target-link">
+            {{ target.name }}
+          </a>
+        </td>
+        <td class="url-cell">{{ target.url }}</td>
+        <td>{{ target.monitoringInterval }}s</td>
+        <td>
+          <span class="status-pill" [class.pill-active]="target.isActive" [class.pill-inactive]="!target.isActive">
+            {{ target.isActive ? 'Active' : 'Inactive' }}
+          </span>
+        </td>
+        <td>{{ target.createdAt | date:'dd/MM/yyyy' }}</td>
+        <td class="actions-cell">
+          <a [routerLink]="['/targets', target.id]" class="btn btn-sm btn-ghost">View</a>
+          <a [routerLink]="['/targets', target.id, 'edit']" class="btn btn-sm btn-secondary">Edit</a>
+          <button class="btn btn-sm btn-danger"
+                  (click)="confirmDelete(target.id)"
+                  *ngIf="deleteConfirmId !== target.id">
+            Delete
+          </button>
+          <span *ngIf="deleteConfirmId === target.id" class="confirm-delete">
+            <span class="confirm-text">Are you sure?</span>
+            <button class="btn btn-sm btn-danger" (click)="deleteTarget(target.id)">Yes</button>
+            <button class="btn btn-sm btn-ghost" (click)="cancelDelete()">No</button>
+          </span>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
