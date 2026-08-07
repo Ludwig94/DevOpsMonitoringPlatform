@@ -1,4 +1,4 @@
-using Monitoring.Api.BackgroundServices;
+﻿using Monitoring.Api.BackgroundServices;
 using Monitoring.Api.Data;
 using Monitoring.Api.Middleware;
 using Monitoring.Api.Services;
@@ -28,13 +28,6 @@ builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
-
-// Auto-apply migrations on startup (needed for Docker / fresh environments)
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
-}
 
 app.UseCors("AllowAngularDev");
 
