@@ -1,4 +1,4 @@
-<div class="loading-container" *ngIf="isLoading">
+﻿<div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading target details...</p>
 </div>

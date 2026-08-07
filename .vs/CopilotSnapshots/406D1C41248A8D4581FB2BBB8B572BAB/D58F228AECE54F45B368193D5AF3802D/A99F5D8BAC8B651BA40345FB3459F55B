@@ -1,4 +1,4 @@
-/* Global styles for DevOps Monitoring Platform */
+﻿/* Global styles for DevOps Monitoring Platform */
 
 *, *::before, *::after { box-sizing: border-box; }
 
@@ -102,32 +102,8 @@ html, body {
 /* ---- Empty State ---- */
 .empty-state {
   text-align: center;
-  padding: 4rem 1rem;
+  padding: 4rem 0;
   color: #475569;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-}
-
-.empty-icon {
-  font-size: 3rem;
-  line-height: 1;
-  opacity: 0.6;
-}
-
-.empty-title {
-  font-size: 1.1rem;
-  font-weight: 600;
-  color: #64748b;
-  margin: 0;
-}
-
-.empty-desc {
-  font-size: 0.875rem;
-  color: #334155;
-  margin: 0;
-  max-width: 360px;
 }
 
 .empty-state p { font-size: 0.95rem; margin: 0 0 1rem; }

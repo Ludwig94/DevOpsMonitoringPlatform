@@ -1,4 +1,4 @@
-<div class="dashboard">
+﻿<div class="dashboard">
 
   <!-- Page Header -->
   <div class="page-header">
@@ -40,10 +40,8 @@
 
   <!-- No targets -->
   <div class="empty-state" *ngIf="!isLoading && summaries.length === 0 && !errorMessage">
-    <div class="empty-icon">&#128225;</div>
-    <h2 class="empty-title">No targets monitored yet</h2>
-    <p class="empty-desc">Add your first URL to start tracking uptime and response times.</p>
-    <a routerLink="/targets/new" class="btn btn-primary">+ Add First Target</a>
+    <p>No monitoring targets yet.</p>
+    <a routerLink="/targets/new" class="btn btn-primary">Add your first target</a>
   </div>
 
   <!-- Target Cards -->

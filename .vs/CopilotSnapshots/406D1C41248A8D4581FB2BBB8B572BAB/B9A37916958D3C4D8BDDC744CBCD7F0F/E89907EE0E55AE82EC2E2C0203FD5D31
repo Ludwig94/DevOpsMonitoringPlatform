@@ -1,4 +1,4 @@
-<div class="page-header">
+﻿<div class="page-header">
   <h1 class="page-title">Monitoring Targets</h1>
   <a routerLink="/targets/new" class="btn btn-primary">+ Add Target</a>
 </div>
@@ -11,10 +11,8 @@
 </div>
 
 <div class="empty-state" *ngIf="!isLoading && targets.length === 0 && !errorMessage">
-  <div class="empty-icon">&#128187;</div>
-  <h2 class="empty-title">No targets found</h2>
-  <p class="empty-desc">You haven't added any monitoring targets yet.</p>
-  <a routerLink="/targets/new" class="btn btn-primary">+ Add First Target</a>
+  <p>No monitoring targets found.</p>
+  <a routerLink="/targets/new" class="btn btn-primary">Add your first target</a>
 </div>
 
 <div class="table-container" *ngIf="!isLoading && targets.length > 0">

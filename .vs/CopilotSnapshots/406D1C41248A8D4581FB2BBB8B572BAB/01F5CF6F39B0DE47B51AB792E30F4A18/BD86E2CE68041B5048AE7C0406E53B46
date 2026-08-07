@@ -1,4 +1,4 @@
-/* Global styles for DevOps Monitoring Platform */
+﻿/* Global styles for DevOps Monitoring Platform */
 
 *, *::before, *::after { box-sizing: border-box; }
 

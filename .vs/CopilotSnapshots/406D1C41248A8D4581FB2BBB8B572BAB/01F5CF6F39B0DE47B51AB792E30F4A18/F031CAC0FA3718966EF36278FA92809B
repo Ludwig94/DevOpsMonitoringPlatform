@@ -1,4 +1,4 @@
-<div class="loading-container" *ngIf="isLoading">
+﻿<div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading target details...</p>
 </div>
@@ -92,9 +92,7 @@
   <!-- Recent Check History -->
   <h2 class="section-title">Recent Checks</h2>
   <div class="empty-state" *ngIf="recentResults.length === 0">
-    <div class="empty-icon">&#9203;</div>
-    <h2 class="empty-title">Waiting for first check</h2>
-    <p class="empty-desc">The background service will check this target shortly. Check back in a moment.</p>
+    <p>No check results yet. The background service will start checking shortly.</p>
   </div>
 
   <div class="table-container" *ngIf="recentResults.length > 0">
