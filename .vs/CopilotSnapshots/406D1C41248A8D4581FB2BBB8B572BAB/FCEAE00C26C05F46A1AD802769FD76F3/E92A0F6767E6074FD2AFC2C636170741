@@ -1,4 +1,4 @@
-<div class="dashboard">
+﻿<div class="dashboard">
 
   <!-- Page Header -->
   <div class="page-header">
@@ -66,38 +66,26 @@
       <div class="card-url">{{ summary.target.url }}</div>
 
       <div class="card-metrics">
-        <div class="uptime-bar-block">
-          <div class="uptime-bar-header">
-            <span class="metric-label">Uptime (24h)</span>
-            <span class="uptime-value"
-                  [class.metric-good]="(summary.uptime24h ?? 0) >= 99"
-                  [class.metric-warn]="(summary.uptime24h ?? 0) >= 90 && (summary.uptime24h ?? 0) < 99"
-                  [class.metric-bad]="(summary.uptime24h ?? 0) < 90">
-              {{ summary.uptime24h !== null ? (summary.uptime24h | number:'1.1-1') + '%' : '—' }}
-            </span>
-          </div>
-          <div class="uptime-track">
-            <div class="uptime-fill"
-                 [class.fill-good]="(summary.uptime24h ?? 0) >= 99"
-                 [class.fill-warn]="(summary.uptime24h ?? 0) >= 90 && (summary.uptime24h ?? 0) < 99"
-                 [class.fill-bad]="(summary.uptime24h ?? 0) < 90"
-                 [style.width.%]="summary.uptime24h ?? 0">
-            </div>
-          </div>
+        <div class="metric">
+          <span class="metric-label">Uptime (24h)</span>
+          <span class="metric-value"
+                [class.metric-good]="(summary.uptime24h ?? 0) >= 99"
+                [class.metric-warn]="(summary.uptime24h ?? 0) >= 90 && (summary.uptime24h ?? 0) < 99"
+                [class.metric-bad]="(summary.uptime24h ?? 0) < 90">
+            {{ summary.uptime24h !== null ? (summary.uptime24h | number:'1.1-1') + '%' : '—' }}
+          </span>
         </div>
-        <div class="card-metrics-row">
-          <div class="metric">
-            <span class="metric-label">Avg Response</span>
-            <span class="metric-value">
-              {{ summary.avgResponseTime !== null ? summary.avgResponseTime + 'ms' : '—' }}
-            </span>
-          </div>
-          <div class="metric">
-            <span class="metric-label">Status Code</span>
-            <span class="metric-value">
-              {{ summary.latestResult?.statusCode || '—' }}
-            </span>
-          </div>
+        <div class="metric">
+          <span class="metric-label">Avg Response</span>
+          <span class="metric-value">
+            {{ summary.avgResponseTime !== null ? summary.avgResponseTime + 'ms' : '—' }}
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric-label">Status Code</span>
+          <span class="metric-value">
+            {{ summary.latestResult?.statusCode || '—' }}
+          </span>
         </div>
       </div>
 

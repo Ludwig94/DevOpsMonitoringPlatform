@@ -1,4 +1,4 @@
-.page-header {
+﻿.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -117,52 +117,11 @@
 }
 
 .card-metrics {
-  display: flex;
-  flex-direction: column;
-  gap: 0.6rem;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.5rem;
   margin-bottom: 0.75rem;
 }
-
-.card-metrics-row {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 0.5rem;
-}
-
-/* Uptime progress bar */
-.uptime-bar-block {
-  display: flex;
-  flex-direction: column;
-  gap: 0.3rem;
-}
-
-.uptime-bar-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.uptime-value {
-  font-size: 0.8rem;
-  font-weight: 700;
-}
-
-.uptime-track {
-  height: 5px;
-  background: #1e293b;
-  border-radius: 3px;
-  overflow: hidden;
-}
-
-.uptime-fill {
-  height: 100%;
-  border-radius: 3px;
-  transition: width 0.6s ease;
-}
-
-.fill-good { background: #4ade80; }
-.fill-warn { background: #fbbf24; }
-.fill-bad  { background: #f87171; }
 
 .metric {
   display: flex;
