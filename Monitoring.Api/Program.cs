@@ -11,7 +11,7 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
 
 builder.Services.AddScoped<IMonitoringService, MonitoringService>();
 builder.Services.AddHttpClient<IHealthCheckService, HealthCheckService>();
-builder.Services.AddHostedService<HealthCheckHostedService>();
+builder.Services.AddHostedService<HealthCheckHostedService>(); //
 
 builder.Services.AddCors(options =>
 {
