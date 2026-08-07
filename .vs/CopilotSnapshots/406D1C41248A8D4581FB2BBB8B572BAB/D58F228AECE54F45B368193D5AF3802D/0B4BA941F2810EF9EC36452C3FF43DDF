@@ -1,4 +1,4 @@
-.page-header {
+﻿.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -244,30 +244,4 @@
   padding: 1.25rem;
   height: 220px;
   position: relative;
-}
-
-/* ---- Responsive ---- */
-@media (max-width: 640px) {
-  .stats-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-
-  .response-card {
-    flex-wrap: wrap;
-    gap: 0.4rem;
-  }
-
-  .page-header {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
-
-  .header-left {
-    flex-wrap: wrap;
-  }
-
-  .table th:nth-child(5),
-  .table td:nth-child(5) {
-    display: none;
-  }
 }

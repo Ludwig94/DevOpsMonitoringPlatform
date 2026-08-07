@@ -1,4 +1,4 @@
-.navbar {
+﻿.navbar {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -58,24 +58,4 @@
   padding: 2rem;
   max-width: 1200px;
   margin: 0 auto;
-}
-
-@media (max-width: 640px) {
-  .navbar {
-    padding: 0 1rem;
-    height: auto;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-    padding-top: 0.75rem;
-    padding-bottom: 0.75rem;
-  }
-
-  .navbar-links {
-    width: 100%;
-    gap: 0.5rem;
-  }
-
-  .main-content {
-    padding: 1rem;
-  }
 }

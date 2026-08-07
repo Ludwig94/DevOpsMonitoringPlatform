@@ -1,4 +1,4 @@
-.table-container {
+﻿.table-container {
   background: #16213e;
   border: 1px solid #1e293b;
   border-radius: 10px;
@@ -83,20 +83,4 @@
 .confirm-text {
   color: #f87171;
   font-size: 0.8rem;
-}
-
-/* ---- Responsive ---- */
-@media (max-width: 640px) {
-  .table-container {
-    overflow-x: auto;
-  }
-
-  .table {
-    min-width: 560px;
-  }
-
-  .page-header {
-    flex-wrap: wrap;
-    gap: 0.75rem;
-  }
 }
