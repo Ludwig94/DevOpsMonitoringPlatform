@@ -1,4 +1,4 @@
-using Monitoring.Api.BackgroundServices;
+﻿using Monitoring.Api.BackgroundServices;
 using Monitoring.Api.Data;
 using Monitoring.Api.Middleware;
 using Monitoring.Api.Services;
@@ -29,8 +29,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseCors("AllowAngularDev");
-
 app.UseExceptionHandling();
 
 if (app.Environment.IsDevelopment())
@@ -39,10 +37,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwaggerUI();
 }
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+app.UseCors("AllowAngularDev");
+app.UseHttpsRedirection();
 app.UseAuthorization();
 app.MapControllers();
 app.Run();

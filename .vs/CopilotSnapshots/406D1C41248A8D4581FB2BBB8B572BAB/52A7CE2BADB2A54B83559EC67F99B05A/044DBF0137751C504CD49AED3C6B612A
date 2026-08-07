@@ -1,4 +1,4 @@
-using Monitoring.Api.BackgroundServices;
+﻿using Monitoring.Api.BackgroundServices;
 using Monitoring.Api.Data;
 using Monitoring.Api.Middleware;
 using Monitoring.Api.Services;
@@ -29,8 +29,6 @@ builder.Services.AddSwaggerGen();
 
 var app = builder.Build();
 
-app.UseCors("AllowAngularDev");
-
 app.UseExceptionHandling();
 
 if (app.Environment.IsDevelopment())
@@ -38,6 +36,8 @@ if (app.Environment.IsDevelopment())
     app.UseSwagger();
     app.UseSwaggerUI();
 }
+
+app.UseCors("AllowAngularDev");
 
 if (!app.Environment.IsDevelopment())
 {
