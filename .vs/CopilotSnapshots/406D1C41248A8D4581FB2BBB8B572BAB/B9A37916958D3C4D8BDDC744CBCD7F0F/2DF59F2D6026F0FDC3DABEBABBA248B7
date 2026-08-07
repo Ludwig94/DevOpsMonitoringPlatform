@@ -1,11 +1,11 @@
-<div class="dashboard">
+﻿<div class="dashboard">
 
   <!-- Page Header -->
   <div class="page-header">
     <h1 class="page-title">Dashboard</h1>
     <div class="header-actions">
       <span class="last-refreshed" *ngIf="lastRefreshed">
-        Last updated: {{ lastRefreshed | timeAgo }}
+        Last updated: {{ lastRefreshed | date:'HH:mm:ss' }}
       </span>
       <a routerLink="/targets/new" class="btn btn-primary">+ Add Target</a>
     </div>
@@ -90,7 +90,6 @@
 
       <div class="card-footer">
         Checks every {{ summary.target.monitoringInterval }}s
-        <span *ngIf="summary.latestResult"> · Last check {{ summary.latestResult.checkedAt | timeAgo }}</span>
       </div>
 
     </a>

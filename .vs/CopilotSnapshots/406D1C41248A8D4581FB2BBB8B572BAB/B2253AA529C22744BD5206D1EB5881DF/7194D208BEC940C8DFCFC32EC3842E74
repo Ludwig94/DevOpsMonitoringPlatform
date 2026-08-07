@@ -1,4 +1,4 @@
-import { Component, OnInit, OnDestroy } from '@angular/core';
+﻿import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, Subscription, interval } from 'rxjs';
@@ -8,7 +8,6 @@ import { MonitoringTargetService } from '../../core/services/monitoring-target.s
 import { MonitoringResultService } from '../../core/services/monitoring-result.service';
 import { MonitoringTarget } from '../../core/models/monitoring-target.model';
 import { UptimeStatistics, AverageResponseTime, MonitoringResult } from '../../core/models/monitoring-result.model';
-import { TimeAgoPipe } from '../../shared/pipes/time-ago.pipe';
 
 interface TargetSummary {
   target: MonitoringTarget;
@@ -20,7 +19,7 @@ interface TargetSummary {
 @Component({
   selector: 'app-dashboard',
   standalone: true,
-  imports: [CommonModule, RouterLink, TimeAgoPipe],
+  imports: [CommonModule, RouterLink],
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.css'
 })
