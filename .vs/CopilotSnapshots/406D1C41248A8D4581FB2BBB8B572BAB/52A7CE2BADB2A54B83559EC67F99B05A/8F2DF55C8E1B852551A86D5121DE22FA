@@ -1,4 +1,4 @@
-.page-header {
+﻿.page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -171,45 +171,4 @@
   padding: 4rem;
   color: #64748b;
   gap: 1rem;
-}
-
-/* ---- Status Indicator (dot + label) ---- */
-.status-indicator {
-  display: flex;
-  align-items: center;
-  gap: 0.4rem;
-  font-size: 0.72rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  padding: 0.2rem 0.6rem;
-  border-radius: 10px;
-}
-
-.status-dot {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-/* UP — green pulse */
-.indicator-up { background: rgba(74, 222, 128, 0.12); color: #4ade80; }
-.indicator-up .status-dot {
-  background: #4ade80;
-  box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6);
-  animation: pulse-green 2s ease-in-out infinite;
-}
-
-/* DOWN — red solid */
-.indicator-down { background: rgba(248, 113, 113, 0.12); color: #f87171; }
-.indicator-down .status-dot { background: #f87171; }
-
-/* UNKNOWN — grey */
-.indicator-unknown { background: rgba(100, 116, 139, 0.12); color: #64748b; }
-.indicator-unknown .status-dot { background: #475569; }
-
-@keyframes pulse-green {
-  0%   { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0.6); }
-  70%  { box-shadow: 0 0 0 7px rgba(74, 222, 128, 0); }
-  100% { box-shadow: 0 0 0 0 rgba(74, 222, 128, 0); }
 }

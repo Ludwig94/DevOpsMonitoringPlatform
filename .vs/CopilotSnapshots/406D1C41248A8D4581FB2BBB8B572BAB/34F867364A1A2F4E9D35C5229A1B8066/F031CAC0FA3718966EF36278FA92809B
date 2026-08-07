@@ -1,4 +1,4 @@
-<div class="loading-container" *ngIf="isLoading">
+﻿<div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading target details...</p>
 </div>
@@ -12,12 +12,11 @@
     <div class="header-left">
       <a routerLink="/targets" class="back-link">← Targets</a>
       <h1 class="page-title">{{ target.name }}</h1>
-      <div class="status-indicator"
-           [class.indicator-up]="currentStatus === 'up'"
-           [class.indicator-down]="currentStatus === 'down'"
-           [class.indicator-unknown]="currentStatus === 'unknown'">
-        <span class="status-dot"></span>
-        <span class="status-text">{{ currentStatus === 'up' ? 'UP' : (currentStatus === 'down' ? 'DOWN' : 'UNKNOWN') }}</span>
+      <div class="status-badge"
+           [class.status-up]="currentStatus === 'up'"
+           [class.status-down]="currentStatus === 'down'"
+           [class.status-unknown]="currentStatus === 'unknown'">
+        {{ currentStatus === 'up' ? 'UP' : (currentStatus === 'down' ? 'DOWN' : 'UNKNOWN') }}
       </div>
     </div>
     <a [routerLink]="['/targets', target.id, 'edit']" class="btn btn-secondary">Edit</a>

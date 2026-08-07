@@ -1,4 +1,4 @@
-<div class="dashboard">
+﻿<div class="dashboard">
 
   <!-- Page Header -->
   <div class="page-header">
@@ -54,12 +54,11 @@
 
       <div class="card-header">
         <div class="card-name">{{ summary.target.name }}</div>
-        <div class="status-indicator"
-             [class.indicator-up]="summary.latestResult?.isHealthy"
-             [class.indicator-down]="summary.latestResult && !summary.latestResult.isHealthy"
-             [class.indicator-unknown]="!summary.latestResult">
-          <span class="status-dot"></span>
-          <span class="status-text">{{ summary.latestResult?.isHealthy ? 'UP' : (summary.latestResult ? 'DOWN' : 'UNKNOWN') }}</span>
+        <div class="status-badge"
+             [class.status-up]="summary.latestResult?.isHealthy"
+             [class.status-down]="summary.latestResult && !summary.latestResult.isHealthy"
+             [class.status-unknown]="!summary.latestResult">
+          {{ summary.latestResult?.isHealthy ? 'UP' : (summary.latestResult ? 'DOWN' : 'UNKNOWN') }}
         </div>
       </div>
 
