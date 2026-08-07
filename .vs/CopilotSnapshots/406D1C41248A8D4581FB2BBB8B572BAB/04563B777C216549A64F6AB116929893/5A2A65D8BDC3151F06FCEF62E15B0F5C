@@ -1,4 +1,4 @@
-# DevOps Monitoring Platform
+﻿# DevOps Monitoring Platform
 
 A full-stack uptime and response time monitoring platform built as a portfolio project. Monitor websites and APIs, track uptime statistics, and visualise health check history through a live Angular dashboard.
 
@@ -138,54 +138,9 @@ dotnet test
 
 ---
 
-## Azure Deployment
-
-The project is designed to deploy to three Azure services:
-
-| Service | Hosts | Tier |
-|---|---|---|
-| Azure Static Web Apps | Angular frontend | Free |
-| Azure App Service (Linux container) | .NET API | B1 |
-| Azure SQL Database | SQL Server | Basic |
-
-### GitHub Secrets Required
-
-Before the CI/CD pipelines can run, add these secrets to your GitHub repository  
-(**Settings → Secrets and variables → Actions**):
-
-| Secret | How to get it |
-|---|---|
-| `AZURE_STATIC_WEB_APPS_API_TOKEN` | Azure Portal → Static Web App → Manage deployment token |
-| `ACR_LOGIN_SERVER` | Azure Container Registry → Overview (e.g. `myregistry.azurecr.io`) |
-| `ACR_USERNAME` | Azure Container Registry → Access keys |
-| `ACR_PASSWORD` | Azure Container Registry → Access keys |
-| `AZURE_APP_SERVICE_NAME` | Name of your App Service resource |
-| `AZURE_APP_SERVICE_PUBLISH_PROFILE` | App Service → Overview → Download publish profile |
-
-### App Service Environment Variables
-
-Set these in **App Service → Configuration → Application settings**:
-
-```
-ASPNETCORE_ENVIRONMENT              = Production
-ConnectionStrings__DefaultConnection = Server=tcp:<server>.database.windows.net,1433;Database=DevOpsMonitoringDb;User Id=<user>;Password=<password>;TrustServerCertificate=False;Encrypt=True
-CORS_ORIGINS                        = https://<your-app>.azurestaticapps.net
-```
-
-### CI/CD Pipelines
-
-| Workflow | Trigger | Action |
-|---|---|---|
-| `deploy-frontend.yml` | Push to `main` with changes in `monitoring-dashboard/` | Build Angular → deploy to Static Web Apps |
-| `deploy-api.yml` | Push to `main` with changes in `Monitoring.Api/` | Build Docker image → push to ACR → deploy to App Service |
-
----
-
 ## Roadmap
 
-- [x] Docker Compose local stack
-- [x] GitHub Actions CI/CD workflows (frontend + API)
-- [ ] Azure resources provisioned (App Service + Static Web Apps + Azure SQL)
-- [ ] GitHub secrets configured and pipelines live
+- [ ] GitHub Actions CI/CD pipeline
+- [ ] Azure deployment (App Service + Azure SQL)
 - [ ] JWT authentication
 - [ ] Email / webhook alerting on target failure

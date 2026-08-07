@@ -1,4 +1,4 @@
-# DevOps Monitoring Platform
+﻿# DevOps Monitoring Platform
 
 A full-stack uptime and response time monitoring platform built as a portfolio project. Monitor websites and APIs, track uptime statistics, and visualise health check history through a live Angular dashboard.
 
@@ -183,9 +183,7 @@ CORS_ORIGINS                        = https://<your-app>.azurestaticapps.net
 
 ## Roadmap
 
-- [x] Docker Compose local stack
-- [x] GitHub Actions CI/CD workflows (frontend + API)
-- [ ] Azure resources provisioned (App Service + Static Web Apps + Azure SQL)
-- [ ] GitHub secrets configured and pipelines live
+- [ ] GitHub Actions CI/CD pipeline
+- [ ] Azure deployment (App Service + Azure SQL)
 - [ ] JWT authentication
 - [ ] Email / webhook alerting on target failure

@@ -1,4 +1,4 @@
-using Monitoring.Api.BackgroundServices;
+﻿using Monitoring.Api.BackgroundServices;
 using Monitoring.Api.Data;
 using Monitoring.Api.Middleware;
 using Monitoring.Api.Services;
@@ -15,13 +15,9 @@ builder.Services.AddHostedService<HealthCheckHostedService>();
 
 builder.Services.AddCors(options =>
 {
-    var allowedOrigins = builder.Configuration
-        .GetValue<string>("CORS_ORIGINS", "http://localhost:4200")!
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
     options.AddPolicy("AllowAngularDev", policy =>
     {
-        policy.WithOrigins(allowedOrigins)
+        policy.WithOrigins("http://localhost:4200")
               .AllowAnyHeader()
               .AllowAnyMethod();
     });
