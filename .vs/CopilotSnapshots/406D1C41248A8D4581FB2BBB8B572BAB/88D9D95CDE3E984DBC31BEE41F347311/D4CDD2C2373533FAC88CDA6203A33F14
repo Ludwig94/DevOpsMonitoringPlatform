@@ -1,4 +1,4 @@
-<div class="loading-container" *ngIf="isLoading">
+﻿<div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading target details...</p>
 </div>
@@ -79,14 +79,6 @@
     <span class="response-label">Avg Response Time (24h)</span>
     <span class="response-value">{{ avgResponse.averageResponseTimeMs }} ms</span>
     <span class="response-samples">based on {{ avgResponse.sampleCount }} checks</span>
-  </div>
-
-  <!-- Response Time Chart -->
-  <div class="chart-section" *ngIf="recentResults.length > 0">
-    <h2 class="section-title">Response Time — Last 20 Checks</h2>
-    <div class="chart-container">
-      <canvas #responseChart></canvas>
-    </div>
   </div>
 
   <!-- Recent Check History -->
