@@ -1,9 +1,13 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
+import { forkJoin, of } from 'rxjs';
+import { catchError } from 'rxjs/operators';
 
 import { MonitoringTargetService } from '../../../core/services/monitoring-target.service';
+import { MonitoringResultService } from '../../../core/services/monitoring-result.service';
 import { MonitoringTarget } from '../../../core/models/monitoring-target.model';
+import { MonitoringResult } from '../../../core/models/monitoring-result.model';
 
 @Component({
   selector: 'app-target-list',
@@ -14,11 +18,15 @@ import { MonitoringTarget } from '../../../core/models/monitoring-target.model';
 })
 export class TargetListComponent implements OnInit {
   targets: MonitoringTarget[] = [];
+  latestResults: Map<number, MonitoringResult | null> = new Map();
   isLoading = true;
   errorMessage = '';
   deleteConfirmId: number | null = null;
 
-  constructor(private targetService: MonitoringTargetService) {}
+  constructor(
+    private targetService: MonitoringTargetService,
+    private resultService: MonitoringResultService
+  ) {}
 
   ngOnInit(): void {
     this.loadTargets();
@@ -29,7 +37,14 @@ export class TargetListComponent implements OnInit {
     this.targetService.getAll().subscribe({
       next: (targets) => {
         this.targets = targets;
-        this.isLoading = false;
+        if (targets.length === 0) { this.isLoading = false; return; }
+        const requests = targets.map(t =>
+          this.resultService.getRecentResults(t.id, 1).pipe(catchError(() => of([])))
+        );
+        forkJoin(requests).subscribe(results => {
+          targets.forEach((t, i) => this.latestResults.set(t.id, results[i][0] ?? null));
+          this.isLoading = false;
+        });
       },
       error: () => {
         this.errorMessage = 'Failed to load targets.';

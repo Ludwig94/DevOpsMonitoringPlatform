@@ -24,6 +24,7 @@
         <th>Name</th>
         <th>URL</th>
         <th>Interval</th>
+        <th>Health</th>
         <th>Status</th>
         <th>Created</th>
         <th>Actions</th>
@@ -38,6 +39,15 @@
         </td>
         <td class="url-cell">{{ target.url }}</td>
         <td>{{ target.monitoringInterval }}s</td>
+        <td>
+          <div class="health-indicator"
+               [class.indicator-up]="latestResults.get(target.id)?.isHealthy"
+               [class.indicator-down]="latestResults.get(target.id) !== null && latestResults.get(target.id) !== undefined && !latestResults.get(target.id)?.isHealthy"
+               [class.indicator-unknown]="!latestResults.get(target.id)">
+            <span class="status-dot"></span>
+            <span>{{ latestResults.get(target.id)?.isHealthy ? 'UP' : (latestResults.get(target.id) ? 'DOWN' : '—') }}</span>
+          </div>
+        </td>
         <td>
           <span class="status-pill" [class.pill-active]="target.isActive" [class.pill-inactive]="!target.isActive">
             {{ target.isActive ? 'Active' : 'Inactive' }}
