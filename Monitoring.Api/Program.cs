@@ -1,59 +1,97 @@
+using Microsoft.EntityFrameworkCore;
 using Monitoring.Api.BackgroundServices;
 using Monitoring.Api.Data;
 using Monitoring.Api.Middleware;
 using Monitoring.Api.Services;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
-builder.Services.AddDbContext<ApplicationDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
-
-builder.Services.AddScoped<IMonitoringService, MonitoringService>();
-builder.Services.AddHttpClient<IHealthCheckService, HealthCheckService>();
-builder.Services.AddHostedService<HealthCheckHostedService>(); //
-
-builder.Services.AddCors(options =>
-{
-    var allowedOrigins = builder.Configuration
-        .GetValue<string>("CORS_ORIGINS", "http://localhost:4200")!
-        .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
-
-    options.AddPolicy("AllowAngularDev", policy =>
-    {
-        policy.WithOrigins(allowedOrigins)
-              .AllowAnyHeader()
-              .AllowAnyMethod();
-    });
-});
-
+// Controllers
 builder.Services.AddControllers();
+
+// Swagger
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Database
+builder.Services.AddDbContext<ApplicationDbContext>(options =>
+    options.UseSqlServer(
+        builder.Configuration.GetConnectionString("DefaultConnection"),
+        sqlOptions =>
+        {
+            sqlOptions.EnableRetryOnFailure(
+                maxRetryCount: 5,
+                maxRetryDelay: TimeSpan.FromSeconds(10),
+                errorNumbersToAdd: null);
+        }));
+
+// Services
+builder.Services.AddScoped<IMonitoringService, MonitoringService>();
+
+// HTTP client for health checks
+builder.Services.AddHttpClient<IHealthCheckService, HealthCheckService>();
+
+// Background health-check service
+builder.Services.AddHostedService<HealthCheckHostedService>();
+
+// CORS
+builder.Services.AddCors(options =>
+{
+    var allowedOrigins = builder.Configuration
+        .GetValue<string>(
+            "CORS_ORIGINS",
+            "http://localhost:4200")!
+        .Split(
+            ',',
+            StringSplitOptions.RemoveEmptyEntries |
+            StringSplitOptions.TrimEntries);
+
+    options.AddPolicy("AllowAngularDev", policy =>
+    {
+        policy
+            .WithOrigins(allowedOrigins)
+            .AllowAnyHeader()
+            .AllowAnyMethod();
+    });
+});
+
 var app = builder.Build();
 
-// Auto-apply migrations on startup (needed for Docker / fresh environments)
+// Auto-apply database migrations
 using (var scope = app.Services.CreateScope())
 {
-    var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-    db.Database.Migrate();
+    var db = scope.ServiceProvider
+        .GetRequiredService<ApplicationDbContext>();
+
+    try
+    {
+        db.Database.Migrate();
+    }
+    catch (Exception ex)
+    {
+        var logger = scope.ServiceProvider
+            .GetRequiredService<ILogger<Program>>();
+
+        logger.LogError(
+            ex,
+            "An error occurred while applying database migrations.");
+    }
 }
 
+// Middleware
 app.UseCors("AllowAngularDev");
 
 app.UseExceptionHandling();
 
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI();
-}
+// Swagger
+app.UseSwagger();
+app.UseSwaggerUI();
 
-if (!app.Environment.IsDevelopment())
-{
-    app.UseHttpsRedirection();
-}
+// Don't redirect HTTP -> HTTPS inside the Azure container.
+// Azure App Service handles HTTPS externally.
+
 app.UseAuthorization();
+
 app.MapControllers();
+
 app.Run();
