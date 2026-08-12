@@ -56,12 +56,20 @@
 
       <div class="card-header">
         <div class="card-name">{{ summary.target.name }}</div>
-        <div class="status-indicator"
-             [class.indicator-up]="summary.latestResult?.isHealthy"
-             [class.indicator-down]="summary.latestResult && !summary.latestResult.isHealthy"
-             [class.indicator-unknown]="!summary.latestResult">
-          <span class="status-dot"></span>
-          <span class="status-text">{{ summary.latestResult?.isHealthy ? 'UP' : (summary.latestResult ? 'DOWN' : 'UNKNOWN') }}</span>
+        <div class="card-header-right">
+          <span class="response-badge" *ngIf="summary.latestResult?.responseTimeMs !== null && summary.latestResult?.responseTimeMs !== undefined"
+                [class.response-fast]="(summary.latestResult?.responseTimeMs ?? 0) < 300"
+                [class.response-slow]="(summary.latestResult?.responseTimeMs ?? 0) >= 300 && (summary.latestResult?.responseTimeMs ?? 0) < 1000"
+                [class.response-very-slow]="(summary.latestResult?.responseTimeMs ?? 0) >= 1000">
+            {{ summary.latestResult?.responseTimeMs }}ms
+          </span>
+          <div class="status-indicator"
+               [class.indicator-up]="summary.latestResult?.isHealthy"
+               [class.indicator-down]="summary.latestResult && !summary.latestResult.isHealthy"
+               [class.indicator-unknown]="!summary.latestResult">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ summary.latestResult?.isHealthy ? 'UP' : (summary.latestResult ? 'DOWN' : 'UNKNOWN') }}</span>
+          </div>
         </div>
       </div>
 

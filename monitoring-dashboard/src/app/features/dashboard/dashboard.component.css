@@ -6,7 +6,7 @@
 }
 
 .page-title {
-  color: #e2e8f0;
+  color: var(--text-primary);
   font-size: 1.6rem;
   font-weight: 600;
   margin: 0;
@@ -19,7 +19,7 @@
 }
 
 .last-refreshed {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.8rem;
 }
 
@@ -30,8 +30,8 @@
 }
 
 .stat-item {
-  background: #16213e;
-  border: 1px solid #1e293b;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 8px;
   padding: 1rem 1.5rem;
   display: flex;
@@ -43,12 +43,12 @@
 .stat-value {
   font-size: 1.8rem;
   font-weight: 700;
-  color: #e2e8f0;
+  color: var(--text-primary);
 }
 
 .stat-label {
   font-size: 0.75rem;
-  color: #64748b;
+  color: var(--text-muted);
   text-transform: uppercase;
   letter-spacing: 0.5px;
 }
@@ -63,8 +63,8 @@
 }
 
 .target-card {
-  background: #16213e;
-  border: 1px solid #1e293b;
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
   border-radius: 10px;
   padding: 1.25rem;
   cursor: pointer;
@@ -89,8 +89,28 @@
   margin-bottom: 0.4rem;
 }
 
+.card-header-right {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+/* ---- Response Time Badge ---- */
+.response-badge {
+  font-size: 0.7rem;
+  font-weight: 700;
+  padding: 0.15rem 0.5rem;
+  border-radius: 10px;
+  letter-spacing: 0.3px;
+}
+
+.response-fast      { background: rgba(74, 222, 128, 0.12); color: #4ade80; }
+.response-slow      { background: rgba(251, 191, 36, 0.12);  color: #fbbf24; }
+.response-very-slow { background: rgba(248, 113, 113, 0.12); color: #f87171; }
+
 .card-name {
-  color: #e2e8f0;
+  color: var(--text-primary);
   font-size: 1rem;
   font-weight: 600;
 }
@@ -108,7 +128,7 @@
 .status-unknown { background: rgba(100, 116, 139, 0.15); color: #94a3b8; }
 
 .card-url {
-  color: #64748b;
+  color: var(--text-muted);
   font-size: 0.8rem;
   margin-bottom: 1rem;
   white-space: nowrap;
@@ -149,7 +169,7 @@
 
 .uptime-track {
   height: 5px;
-  background: #1e293b;
+  background: var(--bg-elevated);
   border-radius: 3px;
   overflow: hidden;
 }
@@ -171,14 +191,14 @@
 }
 
 .metric-label {
-  color: #475569;
+  color: var(--text-faint);
   font-size: 0.7rem;
   text-transform: uppercase;
   letter-spacing: 0.4px;
 }
 
 .metric-value {
-  color: #94a3b8;
+  color: var(--text-secondary);
   font-size: 0.9rem;
   font-weight: 600;
 }
@@ -188,16 +208,16 @@
 .metric-bad { color: #f87171; }
 
 .card-footer {
-  color: #334155;
+  color: var(--text-faint);
   font-size: 0.75rem;
-  border-top: 1px solid #1e293b;
+  border-top: 1px solid var(--border);
   padding-top: 0.6rem;
 }
 
 .empty-state {
   text-align: center;
   padding: 4rem 2rem;
-  color: #64748b;
+  color: var(--text-muted);
 }
 
 .empty-state p {
@@ -210,7 +230,7 @@
   flex-direction: column;
   align-items: center;
   padding: 4rem;
-  color: #64748b;
+  color: var(--text-muted);
   gap: 1rem;
 }
 
