@@ -51,16 +51,8 @@ Chart.register(
 })
 export class TargetDetailComponent implements OnInit, OnDestroy {
 
-  private chartCanvas?: ElementRef<HTMLCanvasElement>;
-
   @ViewChild('responseChart')
-  set responseChart(element: ElementRef<HTMLCanvasElement> | undefined) {
-    this.chartCanvas = element;
-
-    if (element && this.recentResults.length > 0) {
-      setTimeout(() => this.buildChart());
-    }
-  }
+  chartCanvas?: ElementRef<HTMLCanvasElement>;
 
   target: MonitoringTarget | null = null;
 
@@ -131,10 +123,12 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
         this.isLoading = false;
 
         /*
-         * The canvas is created by *ngIf after Angular
-         * updates the view. The @ViewChild setter above
-         * will therefore call buildChart() when it exists.
+         * Wait until Angular has rendered the canvas
+         * after recentResults has been populated.
          */
+        setTimeout(() => {
+          this.buildChart();
+        });
       },
 
       error: (error) => {
@@ -154,10 +148,19 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
 
   private buildChart(): void {
 
-    if (
-      !this.chartCanvas ||
-      !this.recentResults.length
-    ) {
+    if (!this.chartCanvas) {
+      console.error(
+        'Response chart canvas was not found.'
+      );
+
+      return;
+    }
+
+    if (!this.recentResults.length) {
+      console.warn(
+        'No monitoring results available for chart.'
+      );
+
       return;
     }
 
@@ -165,47 +168,68 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
 
     /*
      * API returns newest first.
-     * Reverse so the chart goes oldest -> newest.
+     * Reverse so the oldest check appears first.
      */
     const ordered = [
       ...this.recentResults
     ].reverse();
 
-    const labels = ordered.map(result => {
-
-      const date = new Date(
-        result.checkedAt
-      );
-
-      return `${date
-        .getHours()
-        .toString()
-        .padStart(2, '0')}:${date
-        .getMinutes()
-        .toString()
-        .padStart(2, '0')}`;
-    });
-
-    const data = ordered.map(result =>
-      result.isHealthy
-        ? result.responseTime
-        : null
+    /*
+     * Simple labels: 1, 2, 3 ... 20.
+     *
+     * This removes date/time formatting from the
+     * equation while we troubleshoot the chart.
+     */
+    const labels = ordered.map(
+      (_result, index) => `${index + 1}`
     );
 
+    /*
+     * Use every response time directly.
+     *
+     * We deliberately don't convert unhealthy
+     * results to null here.
+     */
+    const data = ordered.map(
+      result => result.responseTime
+    );
+
+    console.log(
+      'CHART DATA:',
+      data
+    );
+
+    console.log(
+      'CHART LABELS:',
+      labels
+    );
+
+    console.log(
+      'CANVAS:',
+      this.chartCanvas
+    );
+
+    console.log(
+      'RECENT RESULTS:',
+      this.recentResults
+    );
+
+    const canvas =
+      this.chartCanvas.nativeElement;
+
     this.chart = new Chart(
-      this.chartCanvas.nativeElement,
+      canvas,
       {
         type: 'line',
 
         data: {
-
-          labels,
+          labels: labels,
 
           datasets: [
             {
               label: 'Response Time (ms)',
 
-              data,
+              data: data,
 
               borderColor: '#4ade80',
 
@@ -214,16 +238,19 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
 
               borderWidth: 2,
 
-              pointRadius: 3,
+              pointRadius: 4,
+
+              pointHoverRadius: 6,
 
               pointBackgroundColor:
                 '#4ade80',
 
+              pointBorderColor:
+                '#4ade80',
+
               tension: 0.3,
 
-              fill: true,
-
-              spanGaps: false
+              fill: true
             }
           ]
         },
@@ -234,6 +261,8 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
 
           maintainAspectRatio: false,
 
+          animation: false,
+
           plugins: {
 
             legend: {
@@ -241,11 +270,12 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
             },
 
             tooltip: {
+              enabled: true,
 
               callbacks: {
 
                 label: (context) =>
-                  `${context.parsed.y} ms`
+                  ` ${context.parsed.y} ms`
               }
             }
           },
@@ -254,8 +284,10 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
 
             x: {
 
+              display: true,
+
               ticks: {
-                color: '#475569',
+                color: '#94a3b8',
 
                 font: {
                   size: 11
@@ -269,11 +301,13 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
 
             y: {
 
+              display: true,
+
               beginAtZero: true,
 
               ticks: {
 
-                color: '#475569',
+                color: '#94a3b8',
 
                 font: {
                   size: 11
@@ -290,6 +324,11 @@ export class TargetDetailComponent implements OnInit, OnDestroy {
           }
         }
       }
+    );
+
+    console.log(
+      'CHART CREATED:',
+      this.chart
     );
   }
 
