@@ -25,21 +25,6 @@ jobs:
           submodules: true
           lfs: false
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: monitoring-dashboard/package-lock.json
-
-      - name: Install dependencies
-        working-directory: monitoring-dashboard
-        run: npm ci
-
-      - name: Build Angular app (production)
-        working-directory: monitoring-dashboard
-        run: npm run build -- --configuration production
-
       - name: Build And Deploy
         id: builddeploy
         uses: Azure/static-web-apps-deploy@v1
@@ -50,7 +35,7 @@ jobs:
           app_location: "/monitoring-dashboard"
           api_location: ""
           output_location: "dist/monitoring-dashboard/browser"
-          skip_app_build: true
+          app_build_command: "npm run build -- --configuration production"
 
   close_pull_request_job:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
