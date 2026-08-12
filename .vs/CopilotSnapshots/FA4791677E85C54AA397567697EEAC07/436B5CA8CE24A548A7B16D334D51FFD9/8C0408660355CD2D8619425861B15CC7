@@ -1,0 +1,174 @@
+﻿.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background-color: var(--navbar-bg);
+  padding: 0 2rem;
+  height: 60px;
+  border-bottom: 2px solid var(--navbar-border);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.navbar-logo {
+  color: var(--accent);
+  font-size: 1rem;
+}
+
+.navbar-title {
+  color: var(--text-primary);
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.navbar-links {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.navbar-links a {
+  color: var(--navbar-link);
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.navbar-links a:hover {
+  color: var(--text-primary);
+  background: var(--navbar-active-bg);
+}
+
+.navbar-links a.active {
+  color: var(--accent);
+  background: var(--navbar-active-bg);
+}
+
+/* ---- Theme Toggle Button ---- */
+.theme-toggle {
+  background: var(--bg-elevated);
+  border: 1px solid var(--border-subtle);
+  border-radius: 20px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1rem;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.2s, color 0.2s;
+  flex-shrink: 0;
+}
+
+.theme-toggle:hover {
+  background: var(--border-subtle);
+  color: var(--text-primary);
+}
+
+.main-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    padding: 0 1rem;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .navbar-links {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+}
+
+
+.navbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 0.6rem;
+  text-decoration: none;
+}
+
+.navbar-logo {
+  color: #4ade80;
+  font-size: 1rem;
+}
+
+.navbar-title {
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.navbar-links {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.navbar-links a {
+  color: #94a3b8;
+  text-decoration: none;
+  font-size: 0.95rem;
+  padding: 0.4rem 0.8rem;
+  border-radius: 4px;
+  transition: color 0.2s, background 0.2s;
+}
+
+.navbar-links a:hover {
+  color: #e2e8f0;
+  background: #16213e;
+}
+
+.navbar-links a.active {
+  color: #4ade80;
+  background: #16213e;
+}
+
+.main-content {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    padding: 0 1rem;
+    height: auto;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    padding-top: 0.75rem;
+    padding-bottom: 0.75rem;
+  }
+
+  .navbar-links {
+    width: 100%;
+    gap: 0.5rem;
+  }
+
+  .main-content {
+    padding: 1rem;
+  }
+}

@@ -1,0 +1,94 @@
+﻿# Project Status
+
+## Project Name
+DevOps Monitoring Platform
+
+## Goal
+A production-like monitoring platform that tracks website/API uptime, collects response time statistics, and displays live monitoring data through an Angular dashboard. Built as a portfolio project demonstrating full-stack .NET + Angular development with Docker containerisation.
+
+---
+
+## Current Phase
+
+**Phase 7 — Docker ✅ COMPLETE**
+**Next: README + Azure Deployment**
+
+---
+
+## Completed Phases
+
+| Phase | Description | Status |
+|---|---|---|
+| 1 | Backend foundation — EF Core, SQL Server, entities, DTOs, migrations | ✅ Complete |
+| 2 | CRUD API — MonitoringTargetsController, MonitoringService, exception middleware, 25 unit tests | ✅ Complete |
+| 3 | Health check engine — HealthCheckService, background scheduler, results/stats API | ✅ Complete |
+| 4 | Angular dashboard — standalone components, routing, models, HTTP services | ✅ Complete |
+| 5 | Frontend/backend integration — CORS, API connection, end-to-end verified | ✅ Complete |
+| 6 | UI Polish — TimeAgoPipe, pulse dot indicators, uptime progress bars, Chart.js response time chart, responsive layout, empty state polish | ✅ Complete |
+| 7 | Docker — multi-container compose (SQL Server 2022 + .NET API + nginx/Angular), auto-migrations on startup | ✅ Complete |
+
+---
+
+## Technology Stack
+
+### Backend
+- ASP.NET Core Web API (.NET 10)
+- Entity Framework Core 10 (Code First, migrations)
+- SQL Server 2022 (LocalDB for dev, Docker container for compose)
+- xUnit + Moq (25 unit tests)
+
+### Frontend
+- Angular 18 (standalone components, lazy-loaded routes)
+- TypeScript
+- Chart.js (response time line chart)
+- Nginx (production static file server + API proxy)
+
+### DevOps
+- Docker + Docker Compose (3-container stack)
+- GitHub (version control)
+- GitHub Actions *(planned)*
+- Azure *(planned)*
+
+---
+
+## Architecture Decisions
+
+| Decision | Rationale |
+|---|---|
+| Monorepo structure (`Monitoring.Api/` + `monitoring-dashboard/`) | Industry-standard fullstack layout; frontend and backend deploy independently |
+| Controller → Service → DbContext layering | Thin controllers, testable business logic, clear separation of concerns |
+| DTOs separate from EF entities | Prevents over-posting, decouples API contract from database schema |
+| Angular standalone components + lazy routing | Modern Angular 18 pattern; no NgModules needed |
+| Nginx API proxy in Docker | Single origin in production eliminates CORS; `apiBaseUrl: ''` in `environment.prod.ts` |
+| `db.Database.Migrate()` on startup | Ensures database and schema exist automatically in any fresh environment (Docker, CI, Azure) |
+| SSR disabled | Dashboard is a SPA — SSR added complexity with no benefit for a data-driven admin UI |
+
+---
+
+## Remaining Tasks
+
+1. **README.md** — architecture diagram, setup instructions, screenshots
+2. **Azure Deployment** — Azure App Service (API) + Static Web App or App Service (frontend) + Azure SQL
+3. **GitHub Actions CI/CD** — build, test, and deploy pipeline on push to main
+4. **Authentication** *(optional)* — JWT login to protect API endpoints
+
+---
+
+## Running the Project
+
+### Local development
+```powershell
+# Terminal 1 — backend
+cd Monitoring.Api && dotnet run
+
+# Terminal 2 — frontend
+cd monitoring-dashboard && ng serve
+```
+Open `http://localhost:4200`
+
+### Docker (full stack)
+```powershell
+docker-compose up
+```
+Open `http://localhost:4200`  
+Swagger: `http://localhost:5158/swagger`

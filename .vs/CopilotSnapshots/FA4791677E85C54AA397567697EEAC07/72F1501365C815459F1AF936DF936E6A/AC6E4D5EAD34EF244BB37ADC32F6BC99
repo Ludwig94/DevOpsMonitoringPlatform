@@ -1,4 +1,4 @@
-<div class="page-header">
+﻿<div class="page-header">
   <h1 class="page-title">Monitoring Targets</h1>
   <a routerLink="/targets/new" class="btn btn-primary">+ Add Target</a>
 </div>
@@ -39,25 +39,15 @@
         </td>
         <td class="url-cell">{{ target.url }}</td>
         <td>{{ target.monitoringInterval }}s</td>
-<td>
-  <div class="health-indicator"
-       [class.indicator-up]="latestResults.get(target.id)?.isHealthy"
-       [class.indicator-down]="latestResults.get(target.id) !== null &&
-                               latestResults.get(target.id) !== undefined &&
-                               !latestResults.get(target.id)?.isHealthy"
-          [class.indicator-unknown]="!latestResults.get(target.id)">
-
-        <span class="status-dot"></span>
-
-        <span>
-          {{
-            latestResults.get(target.id)?.isHealthy
-              ? 'UP'
-              : (latestResults.get(target.id) ? 'DOWN' : '—')
-          }}
-        </span>
-      </div>
-    </td>
+        <td>
+          <div class="health-indicator"
+               [class.indicator-up]="latestResults.get(target.id)?.isHealthy"
+               [class.indicator-down]="latestResults.get(target.id) !== null && latestResults.get(target.id) !== undefined && !latestResults.get(target.id)?.isHealthy"
+               [class.indicator-unknown]="!latestResults.get(target.id)">
+            <span class="status-dot"></span>
+            <span>{{ latestResults.get(target.id)?.isHealthy ? 'UP' : (latestResults.get(target.id) ? 'DOWN' : '—') }}</span>
+          </div>
+        </td>
         <td>
           <span class="status-pill" [class.pill-active]="target.isActive" [class.pill-inactive]="!target.isActive">
             {{ target.isActive ? 'Active' : 'Inactive' }}

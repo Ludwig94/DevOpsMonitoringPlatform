@@ -1,4 +1,4 @@
-.table-container {
+﻿.table-container {
   background: var(--bg-surface);
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -12,12 +12,10 @@
 }
 
 .table thead {
-  background: #0f172a;
   background: var(--bg-base);
 }
 
 .table th {
-  color: #64748b;
   color: var(--text-muted);
   text-align: left;
   padding: 0.85rem 1.1rem;
@@ -25,14 +23,11 @@
   text-transform: uppercase;
   letter-spacing: 0.6px;
   font-weight: 600;
-  border-bottom: 1px solid #1e293b;
   border-bottom: 1px solid var(--border);
 }
 
 .table td {
   padding: 0.9rem 1.1rem;
-  color: #94a3b8;
-  border-bottom: 1px solid #1e293b;
   color: var(--text-secondary);
   border-bottom: 1px solid var(--border);
 }
@@ -42,19 +37,16 @@
 }
 
 .table tbody tr:hover {
-  background: #1e293b;
   background: var(--bg-elevated);
 }
 
 .target-link {
-  color: #e2e8f0;
   color: var(--text-primary);
   text-decoration: none;
   font-weight: 500;
 }
 
 .target-link:hover {
-  color: #4ade80;
   color: var(--accent);
 }
 

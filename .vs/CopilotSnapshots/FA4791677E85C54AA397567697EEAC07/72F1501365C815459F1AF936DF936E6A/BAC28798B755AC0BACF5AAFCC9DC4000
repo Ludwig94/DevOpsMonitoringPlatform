@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+﻿import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
 import { forkJoin, of } from 'rxjs';
@@ -19,7 +19,6 @@ import { MonitoringResult } from '../../../core/models/monitoring-result.model';
 export class TargetListComponent implements OnInit {
   targets: MonitoringTarget[] = [];
   latestResults: Map<number, MonitoringResult | null> = new Map();
-
   isLoading = true;
   errorMessage = '';
   deleteConfirmId: number | null = null;
@@ -35,42 +34,18 @@ export class TargetListComponent implements OnInit {
 
   loadTargets(): void {
     this.isLoading = true;
-    this.errorMessage = '';
-    this.latestResults.clear();
-
     this.targetService.getAll().subscribe({
       next: (targets) => {
         this.targets = targets;
-
-        if (targets.length === 0) {
-          this.isLoading = false;
-          return;
-        }
-
-        const requests = targets.map((target) =>
-          this.resultService
-            .getRecentResults(target.id, 1)
-            .pipe(
-              catchError(() => of([] as MonitoringResult[]))
-            )
+        if (targets.length === 0) { this.isLoading = false; return; }
+        const requests = targets.map(t =>
+          this.resultService.getRecentResults(t.id, 1).pipe(catchError(() => of([])))
         );
-
-        forkJoin(requests).subscribe({
-          next: (results) => {
-            targets.forEach((target, index) => {
-              const latestResult = results[index]?.[0] ?? null;
-              this.latestResults.set(target.id, latestResult);
-            });
-
-            this.isLoading = false;
-          },
-          error: () => {
-            this.errorMessage = 'Failed to load monitoring results.';
-            this.isLoading = false;
-          }
+        forkJoin(requests).subscribe(results => {
+          targets.forEach((t, i) => this.latestResults.set(t.id, results[i][0] ?? null));
+          this.isLoading = false;
         });
       },
-
       error: () => {
         this.errorMessage = 'Failed to load targets.';
         this.isLoading = false;
@@ -89,14 +64,9 @@ export class TargetListComponent implements OnInit {
   deleteTarget(id: number): void {
     this.targetService.delete(id).subscribe({
       next: () => {
-        this.targets = this.targets.filter(
-          target => target.id !== id
-        );
-
-        this.latestResults.delete(id);
+        this.targets = this.targets.filter(t => t.id !== id);
         this.deleteConfirmId = null;
       },
-
       error: () => {
         this.errorMessage = 'Failed to delete target.';
         this.deleteConfirmId = null;

@@ -1,0 +1,122 @@
+﻿<div class="dashboard">
+
+  <!-- Page Header -->
+  <div class="page-header">
+    <h1 class="page-title">Dashboard</h1>
+    <div class="header-actions">
+      <span class="last-refreshed" *ngIf="lastRefreshed">
+        Last updated: {{ lastRefreshed | timeAgo }}
+      </span>
+      <a routerLink="/targets/new" class="btn btn-primary">+ Add Target</a>
+    </div>
+  </div>
+
+  <!-- Error -->
+  <div class="alert alert-error" *ngIf="errorMessage">
+    {{ errorMessage }}
+  </div>
+
+  <!-- Loading -->
+  <div class="loading-container" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading monitoring data...</p>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" *ngIf="!isLoading && !errorMessage">
+    <div class="stat-item">
+      <span class="stat-value">{{ totalTargets }}</span>
+      <span class="stat-label">Total Targets</span>
+    </div>
+    <div class="stat-item healthy">
+      <span class="stat-value">{{ healthyTargets }}</span>
+      <span class="stat-label">Healthy</span>
+    </div>
+    <div class="stat-item unhealthy">
+      <span class="stat-value">{{ unhealthyTargets }}</span>
+      <span class="stat-label">Unhealthy</span>
+    </div>
+  </div>
+
+  <!-- No targets -->
+  <div class="empty-state" *ngIf="!isLoading && summaries.length === 0 && !errorMessage">
+    <div class="empty-icon">&#128225;</div>
+    <h2 class="empty-title">No targets monitored yet</h2>
+    <p class="empty-desc">Add your first URL to start tracking uptime and response times.</p>
+    <a routerLink="/targets/new" class="btn btn-primary">+ Add First Target</a>
+  </div>
+
+  <!-- Target Cards -->
+  <div class="cards-grid" *ngIf="!isLoading && summaries.length > 0">
+    <a class="target-card" *ngFor="let summary of summaries"
+       [routerLink]="['/targets', summary.target.id]"
+       [class.card-healthy]="summary.latestResult?.isHealthy"
+       [class.card-unhealthy]="summary.latestResult && !summary.latestResult.isHealthy"
+       [class.card-unknown]="!summary.latestResult">
+
+      <div class="card-header">
+        <div class="card-name">{{ summary.target.name }}</div>
+        <div class="card-header-right">
+          <span class="response-badge" *ngIf="summary.latestResult?.responseTime !== null && summary.latestResult?.responseTime !== undefined"
+                [class.response-fast]="(summary.latestResult?.responseTime ?? 0) < 300"
+                [class.response-slow]="(summary.latestResult?.responseTime ?? 0) >= 300 && (summary.latestResult?.responseTime ?? 0) < 1000"
+                [class.response-very-slow]="(summary.latestResult?.responseTime ?? 0) >= 1000">
+            {{ summary.latestResult?.responseTime }}ms
+          </span>
+          <div class="status-indicator"
+               [class.indicator-up]="summary.latestResult?.isHealthy"
+               [class.indicator-down]="summary.latestResult && !summary.latestResult.isHealthy"
+               [class.indicator-unknown]="!summary.latestResult">
+            <span class="status-dot"></span>
+            <span class="status-text">{{ summary.latestResult?.isHealthy ? 'UP' : (summary.latestResult ? 'DOWN' : 'UNKNOWN') }}</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-url">{{ summary.target.url }}</div>
+
+      <div class="card-metrics">
+        <div class="uptime-bar-block">
+          <div class="uptime-bar-header">
+            <span class="metric-label">Uptime (24h)</span>
+            <span class="uptime-value"
+                  [class.metric-good]="(summary.uptime24h ?? 0) >= 99"
+                  [class.metric-warn]="(summary.uptime24h ?? 0) >= 90 && (summary.uptime24h ?? 0) < 99"
+                  [class.metric-bad]="(summary.uptime24h ?? 0) < 90">
+              {{ summary.uptime24h !== null ? (summary.uptime24h | number:'1.1-1') + '%' : '—' }}
+            </span>
+          </div>
+          <div class="uptime-track">
+            <div class="uptime-fill"
+                 [class.fill-good]="(summary.uptime24h ?? 0) >= 99"
+                 [class.fill-warn]="(summary.uptime24h ?? 0) >= 90 && (summary.uptime24h ?? 0) < 99"
+                 [class.fill-bad]="(summary.uptime24h ?? 0) < 90"
+                 [style.width.%]="summary.uptime24h ?? 0">
+            </div>
+          </div>
+        </div>
+        <div class="card-metrics-row">
+          <div class="metric">
+            <span class="metric-label">Avg Response</span>
+            <span class="metric-value">
+              {{ summary.avgResponseTime !== null ? summary.avgResponseTime + 'ms' : '—' }}
+            </span>
+          </div>
+          <div class="metric">
+            <span class="metric-label">Status Code</span>
+            <span class="metric-value">
+              {{ summary.latestResult?.statusCode || '—' }}
+            </span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-footer">
+        Checks every {{ summary.target.monitoringInterval }}s
+        <span *ngIf="summary.latestResult"> · Last check {{ summary.latestResult.checkedAt | timeAgo }}</span>
+      </div>
+
+    </a>
+  </div>
+
+</div>

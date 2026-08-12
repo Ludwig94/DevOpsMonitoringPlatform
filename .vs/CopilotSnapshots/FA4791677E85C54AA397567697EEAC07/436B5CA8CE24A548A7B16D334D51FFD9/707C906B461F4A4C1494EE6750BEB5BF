@@ -1,0 +1,17 @@
+﻿<header class="navbar">
+  <div class="navbar-brand">
+    <span class="navbar-logo">&#9679;</span>
+    <span class="navbar-title">DevOps Monitor</span>
+  </div>
+  <nav class="navbar-links">
+    <a routerLink="/dashboard" routerLinkActive="active">Dashboard</a>
+    <a routerLink="/targets" routerLinkActive="active">Targets</a>
+    <button class="theme-toggle" (click)="toggleTheme()" [title]="isDarkMode ? 'Switch to light mode' : 'Switch to dark mode'">
+      {{ isDarkMode ? '☀️' : '🌙' }}
+    </button>
+  </nav>
+</header>
+
+<main class="main-content">
+  <router-outlet />
+</main>
