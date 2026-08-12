@@ -10,8 +10,8 @@ A production-like monitoring platform that tracks website/API uptime, collects r
 
 ## Current Phase
 
-**Phase 7 — Docker ✅ COMPLETE**
-**Next: README + Azure Deployment**
+**Phase 9 — Azure Deployment + CI/CD ✅ COMPLETE**
+**Next: README**
 
 ---
 
@@ -26,6 +26,8 @@ A production-like monitoring platform that tracks website/API uptime, collects r
 | 5 | Frontend/backend integration — CORS, API connection, end-to-end verified | ✅ Complete |
 | 6 | UI Polish — TimeAgoPipe, pulse dot indicators, uptime progress bars, Chart.js response time chart, responsive layout, empty state polish | ✅ Complete |
 | 7 | Docker — multi-container compose (SQL Server 2022 + .NET API + nginx/Angular), auto-migrations on startup | ✅ Complete |
+| 8 | Azure Deployment — API on Azure App Service (Linux container + ACR), frontend on Azure Static Web Apps, Azure SQL | ✅ Complete |
+| 9 | GitHub Actions CI/CD — `deploy-api.yml` (Docker → ACR → App Service), `azure-static-web-apps.yml` (Angular production build → Static Web Apps) | ✅ Complete |
 
 ---
 
@@ -46,8 +48,11 @@ A production-like monitoring platform that tracks website/API uptime, collects r
 ### DevOps
 - Docker + Docker Compose (3-container stack)
 - GitHub (version control)
-- GitHub Actions *(planned)*
-- Azure *(planned)*
+- GitHub Actions (CI/CD — deploy-api.yml + azure-static-web-apps.yml)
+- Azure App Service (Linux container, B1)
+- Azure Container Registry (ACR)
+- Azure Static Web Apps (Free tier)
+- Azure SQL Database (Basic)
 
 ---
 
@@ -62,19 +67,24 @@ A production-like monitoring platform that tracks website/API uptime, collects r
 | Nginx API proxy in Docker | Single origin in production eliminates CORS; `apiBaseUrl: ''` in `environment.prod.ts` |
 | `db.Database.Migrate()` on startup | Ensures database and schema exist automatically in any fresh environment (Docker, CI, Azure) |
 | SSR disabled | Dashboard is a SPA — SSR added complexity with no benefit for a data-driven admin UI |
+| Azure App Service with Linux container | Full control over runtime via Docker; ACR stores versioned images |
+| Azure Static Web Apps (Free tier) | Global CDN distribution for Angular SPA with zero cost |
+| `fileReplacements` in angular.json | Swaps `environment.ts` → `environment.prod.ts` at build time for correct API URL |
 
 ---
 
 ## Remaining Tasks
 
-1. **README.md** — architecture diagram, setup instructions, screenshots
-2. **Azure Deployment** — Azure App Service (API) + Static Web App or App Service (frontend) + Azure SQL
-3. **GitHub Actions CI/CD** — build, test, and deploy pipeline on push to main
-4. **Authentication** *(optional)* — JWT login to protect API endpoints
+1. **README.md** — architecture diagram, setup instructions, live demo links, screenshots
+2. **Authentication** *(optional)* — JWT login to protect API endpoints
 
 ---
 
 ## Running the Project
+
+### Live (Azure)
+- **Frontend:** https://lively-field-05866330f.7.azurestaticapps.net
+- **API / Swagger:** https://devops-monitoring-platform-ludwig-cphxa2avd7dahyez.swedencentral-01.azurewebsites.net/swagger
 
 ### Local development
 ```powershell
