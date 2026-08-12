@@ -1,5 +1,5 @@
 export const environment = {
   production: true,
-  apiBaseUrl: ''
+  apiBaseUrl: 'https://devops-monitoring-platform-ludwig-cphxa2avd7dahyez.swedencentral-01.azurewebsites.net'
 };
 
