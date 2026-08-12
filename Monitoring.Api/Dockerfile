@@ -14,8 +14,8 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-EXPOSE 5158
+EXPOSE 8080
 
-ENV ASPNETCORE_URLS=http://+:5158
+ENV ASPNETCORE_URLS=http://+:8080
 
 ENTRYPOINT ["dotnet", "Monitoring.Api.dll"]
