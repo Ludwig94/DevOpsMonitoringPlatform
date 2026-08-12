@@ -418,7 +418,8 @@ CORS_ORIGINS                        = https://<your-app>.azurestaticapps.net
 
 - [x] Docker Compose local stack
 - [x] GitHub Actions CI/CD workflows (frontend + API)
-- [ ] Azure resources provisioned (App Service + Static Web Apps + Azure SQL)
-- [ ] GitHub secrets configured and pipelines live
+- [x] Azure resources provisioned (App Service + Static Web Apps + Azure SQL)
+- [x] GitHub secrets configured and pipelines live
 - [ ] JWT authentication
 - [ ] Email / webhook alerting on target failure
+
