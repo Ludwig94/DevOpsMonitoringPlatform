@@ -2,7 +2,218 @@
 
 A full-stack uptime and response time monitoring platform built as a portfolio project. Monitor websites and APIs, track uptime statistics, and visualise health check history through a live Angular dashboard.
 
+🔗 **Live demo:** https://lively-field-05866330f.7.azurestaticapps.net
+📡 **API / Swagger:** https://devops-monitoring-platform-ludwig-cphxa2avd7dahyez.swedencentral-01.azurewebsites.net/swagger
+
 ---
+
+## Features
+
+- **Automatic health checks** — background service polls registered URLs on a configurable interval
+- **Uptime statistics** — 24h / 7d / 30d / all-time uptime percentages per target
+- **Response time tracking** — average response time and historical line chart
+- **Live dashboard** — auto-refreshes every 30 seconds with animated status indicators
+- **Full CRUD** — add, edit, and delete monitoring targets via the UI
+- **Docker support** — single `docker-compose up` runs the entire stack
+- **Azure hosted** — deployed to Azure App Service + Azure Static Web Apps with full CI/CD
+
+---
+
+## Architecture
+
+### Cloud (Azure)
+```
+┌─────────────────────────────────────────────────────────┐
+│                        Azure                            │
+│                                                         │
+│  ┌──────────────────────┐    ┌───────────────────────┐ │
+│  │  Azure Static Web    │    │   Azure App Service   │ │
+│  │  Apps (Angular SPA)  │───▶│   (Docker container)  │ │
+│  │  Free tier / CDN     │    │   ASP.NET Core .NET 10│ │
+│  └──────────────────────┘    └──────────┬────────────┘ │
+│                                         │              │
+│                              ┌──────────▼────────────┐ │
+│                              │   Azure SQL Database  │ │
+│                              │   SQL Server (Basic)  │ │
+│                              └───────────────────────┘ │
+└─────────────────────────────────────────────────────────┘
+```
+
+### Local / Docker
+```
+┌─────────────────────────────────────────────────┐
+│              docker-compose network              │
+│                                                 │
+│  ┌──────────────┐    ┌──────────────────────┐  │
+│  │  frontend    │    │        api           │  │
+│  │  nginx:alpine│───▶│  ASP.NET Core (.NET 10)│ │
+│  │  port 4200   │    │  port 5158           │  │
+│  └──────────────┘    └──────────┬───────────┘  │
+│                                 │               │
+│                      ┌──────────▼───────────┐  │
+│                      │         db           │  │
+│                      │  SQL Server 2022     │  │
+│                      │  port 1433           │  │
+│                      └──────────────────────┘  │
+└─────────────────────────────────────────────────┘
+```
+
+| Layer | Technology |
+|---|---|
+| **Frontend** | Angular 18, TypeScript, Chart.js, Nginx |
+| **Backend** | ASP.NET Core Web API, .NET 10, C# |
+| **Database** | SQL Server 2022 / Azure SQL (EF Core Code First) |
+| **Containerisation** | Docker, Docker Compose, Azure Container Registry |
+| **Cloud** | Azure App Service, Azure Static Web Apps, Azure SQL |
+| **CI/CD** | GitHub Actions |
+| **Testing** | xUnit, Moq (25 unit tests) |
+
+### Project Structure
+
+```
+DevOpsMonitoringPlatform/
+├── Monitoring.Api/              # .NET 10 backend
+│   ├── Controllers/             # API endpoints
+│   ├── Services/                # Business logic + health check engine
+│   ├── BackgroundServices/      # Scheduled health check host
+│   ├── Data/                    # EF Core DbContext + migrations
+│   ├── DTOs/                    # Request/response models
+│   ├── Models/                  # EF Core entities
+│   ├── Middleware/              # Global exception handling
+│   └── Dockerfile
+├── monitoring-dashboard/        # Angular 18 frontend
+│   ├── src/app/
+│   │   ├── core/                # Models + HTTP services
+│   │   ├── features/            # Dashboard, target list, form, detail
+│   │   └── shared/              # Pipes (TimeAgoPipe)
+│   ├── nginx.conf               # Angular routing + API proxy
+│   └── Dockerfile
+├── Monitoring.Api.Tests/        # xUnit + Moq unit tests
+├── .github/workflows/
+│   ├── deploy-api.yml           # Docker → ACR → Azure App Service
+│   └── azure-static-web-apps-lively-field-05866330f.yml  # Angular → Static Web Apps
+└── docker-compose.yml
+```
+
+---
+
+## Getting Started
+
+### Option 1 — Docker (recommended)
+
+**Prerequisites:** [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+
+```bash
+git clone https://github.com/Ludwig94/DevOpsMonitoringPlatform.git
+cd DevOpsMonitoringPlatform
+docker-compose up
+```
+
+| Service | URL |
+|---|---|
+| Dashboard | http://localhost:4200 |
+| API / Swagger | http://localhost:5158/swagger |
+
+> The database is created and migrations are applied automatically on first startup.
+
+---
+
+### Option 2 — Local Development
+
+**Prerequisites:** [.NET 10 SDK](https://dotnet.microsoft.com/download), [Node.js 20+](https://nodejs.org/), [Angular CLI 18](https://angular.io/cli), SQL Server LocalDB
+
+**1. Backend**
+```bash
+cd Monitoring.Api
+dotnet run
+# API available at http://localhost:5158
+# Swagger at http://localhost:5158/swagger
+```
+
+**2. Frontend**
+```bash
+cd monitoring-dashboard
+npm install
+ng serve
+# Dashboard at http://localhost:4200
+```
+
+---
+
+## API Endpoints
+
+| Method | Endpoint | Description |
+|---|---|---|
+| `GET` | `/api/monitoringtargets` | List all targets |
+| `POST` | `/api/monitoringtargets` | Create a target |
+| `GET` | `/api/monitoringtargets/{id}` | Get a target |
+| `PUT` | `/api/monitoringtargets/{id}` | Update a target |
+| `DELETE` | `/api/monitoringtargets/{id}` | Delete a target |
+| `GET` | `/api/targets/{id}/results` | Recent check results |
+| `GET` | `/api/targets/{id}/results/stats` | Uptime statistics |
+| `GET` | `/api/targets/{id}/results/average-response-time` | Average response time |
+
+---
+
+## Running Tests
+
+```bash
+cd Monitoring.Api.Tests
+dotnet test
+```
+
+25 unit tests covering the service layer and health check engine.
+
+---
+
+## Azure Deployment
+
+The project is deployed to three Azure services:
+
+| Service | Hosts | Tier |
+|---|---|---|
+| Azure Static Web Apps | Angular frontend | Free |
+| Azure App Service (Linux container) | .NET API | B1 |
+| Azure SQL Database | SQL Server | Basic |
+
+### CI/CD Pipelines
+
+| Workflow | Trigger | Action |
+|---|---|---|
+| `azure-static-web-apps-lively-field-05866330f.yml` | Push to `main` → `monitoring-dashboard/**` | Build Angular (production) → deploy to Static Web Apps |
+| `deploy-api.yml` | Push to `main` → `Monitoring.Api/**` | Build Docker image → push to ACR → deploy to App Service |
+
+### GitHub Secrets Required
+
+| Secret | Description |
+|---|---|
+| `AZURE_STATIC_WEB_APPS_API_TOKEN_LIVELY_FIELD_05866330F` | Static Web App deployment token |
+| `ACR_LOGIN_SERVER` | Azure Container Registry URL |
+| `ACR_USERNAME` | ACR access key username |
+| `ACR_PASSWORD` | ACR access key password |
+| `AZURE_APP_SERVICE_NAME` | App Service resource name |
+| `AZURE_APP_SERVICE_PUBLISH_PROFILE` | App Service publish profile (XML) |
+
+### App Service Environment Variables
+
+```
+ASPNETCORE_ENVIRONMENT               = Production
+ConnectionStrings__DefaultConnection = Server=tcp:<server>.database.windows.net,...
+CORS_ORIGINS                         = https://<your-static-web-app>.azurestaticapps.net
+```
+
+---
+
+## Roadmap
+
+- [x] Docker Compose local stack
+- [x] GitHub Actions CI/CD (frontend + API)
+- [x] Azure App Service (Linux container via ACR)
+- [x] Azure Static Web Apps (Angular SPA)
+- [x] Azure SQL Database
+- [ ] JWT authentication
+- [ ] Email / webhook alerting on target failure
+
 
 ## Features
 
