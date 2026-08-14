@@ -14,18 +14,24 @@ public class HealthCheckHostedService : BackgroundService
     private readonly ILogger<HealthCheckHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
 
-    // Check the database for targets that need monitoring once per minute.
     private const int SchedulerIntervalSeconds = 60;
-
-    // Prevent too many external requests from running simultaneously.
     private const int MaxConcurrentChecks = 5;
 
-    // Track the next check time for each target.
     private readonly Dictionary<int, DateTime> _nextCheckTimes = [];
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    public HealthCheckHostedService(
+       ILogger<HealthCheckHostedService> logger,
+       IServiceProvider serviceProvider)
     {
-        _logger.LogInformation("HealthCheckHostedService is starting");
+        _logger = logger;
+        _serviceProvider = serviceProvider;
+    }
+
+    protected override async Task ExecuteAsync(
+        CancellationToken stoppingToken)
+    {
+        _logger.LogInformation(
+            "HealthCheckHostedService is starting");
 
         using var timer = new PeriodicTimer(
             TimeSpan.FromSeconds(SchedulerIntervalSeconds));
@@ -67,10 +73,12 @@ public class HealthCheckHostedService : BackgroundService
         using var scope = _serviceProvider.CreateScope();
 
         var dbContext =
-            scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+            scope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
 
         var healthCheckService =
-            scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
+            scope.ServiceProvider
+                .GetRequiredService<IHealthCheckService>();
 
         // One database query per scheduler interval instead of every 5 seconds.
         var activeTargets = await dbContext.MonitoringTargets
@@ -101,7 +109,9 @@ public class HealthCheckHostedService : BackgroundService
         // Find targets that need to be checked.
         var checksToPerform = activeTargets
             .Where(target =>
-                !_nextCheckTimes.TryGetValue(target.Id, out var nextCheck) ||
+                !_nextCheckTimes.TryGetValue(
+                    target.Id,
+                    out var nextCheck) ||
                 now >= nextCheck)
             .ToList();
 
@@ -115,36 +125,39 @@ public class HealthCheckHostedService : BackgroundService
             checksToPerform.Count);
 
         // Limit the number of simultaneous health checks.
-        using var semaphore = new SemaphoreSlim(MaxConcurrentChecks);
+        using var semaphore =
+            new SemaphoreSlim(MaxConcurrentChecks);
 
-        var checkTasks = checksToPerform.Select(async target =>
-        {
-            await semaphore.WaitAsync(cancellationToken);
+        var checkTasks = checksToPerform.Select(
+            async target =>
+            {
+                await semaphore.WaitAsync(cancellationToken);
 
-            try
-            {
-                await PerformHealthCheckAsync(
-                    target,
-                    healthCheckService,
-                    cancellationToken);
-            }
-            catch (OperationCanceledException)
-            {
-                throw;
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(
-                    ex,
-                    "Failed to perform health check for target {TargetName} (ID: {TargetId})",
-                    target.Name,
-                    target.Id);
-            }
-            finally
-            {
-                semaphore.Release();
-            }
-        });
+                try
+                {
+                    await PerformHealthCheckAsync(
+                        target,
+                        healthCheckService,
+                        cancellationToken);
+                }
+                catch (OperationCanceledException)
+                {
+                    throw;
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(
+                        ex,
+                        "Failed to perform health check for target " +
+                        "{TargetName} (ID: {TargetId})",
+                        target.Name,
+                        target.Id);
+                }
+                finally
+                {
+                    semaphore.Release();
+                }
+            });
 
         await Task.WhenAll(checkTasks);
     }
@@ -167,7 +180,8 @@ public class HealthCheckHostedService : BackgroundService
             ResponseTime = result.ResponseTimeMs,
             StatusCode = result.StatusCode,
             IsHealthy = result.IsHealthy,
-            CheckedAt = DateTimeOffset.UtcNow,
+            CheckedAt = DateTime.UtcNow,
+
             ErrorMessage = result.ErrorMessage
         };
 
@@ -180,11 +194,13 @@ public class HealthCheckHostedService : BackgroundService
 
         savingDbContext.MonitoringResults.Add(monitoringResult);
 
-        await savingDbContext.SaveChangesAsync(cancellationToken);
+        await savingDbContext.SaveChangesAsync(
+            cancellationToken);
 
         // Schedule the next check based on the target's configured interval.
         _nextCheckTimes[target.Id] =
-            DateTime.UtcNow.AddSeconds(target.MonitoringInterval);
+            DateTime.UtcNow.AddSeconds(
+                target.MonitoringInterval);
 
         _logger.LogDebug(
             "Health check completed for {TargetName} (ID: {TargetId}) | " +
