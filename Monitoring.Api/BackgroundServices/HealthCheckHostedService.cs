@@ -6,161 +6,201 @@ using Microsoft.EntityFrameworkCore;
 namespace Monitoring.Api.BackgroundServices;
 
 /// <summary>
-/// Background service that periodically performs health checks on all active monitoring targets
-/// Implements IHostedService for lifecycle management
+/// Background service that periodically performs health checks on active monitoring targets.
+/// Optimized to reduce unnecessary Azure SQL Database compute usage.
 /// </summary>
 public class HealthCheckHostedService : BackgroundService
 {
     private readonly ILogger<HealthCheckHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
 
-    // How often to check for targets that need monitoring (in seconds)
-    private const int SchedulerIntervalSeconds = 5;
+    // Check the database for targets that need monitoring once per minute.
+    private const int SchedulerIntervalSeconds = 60;
 
-    // Track the next check time for each target
+    // Prevent too many external requests from running simultaneously.
+    private const int MaxConcurrentChecks = 5;
+
+    // Track the next check time for each target.
     private readonly Dictionary<int, DateTime> _nextCheckTimes = [];
-
-    public HealthCheckHostedService(ILogger<HealthCheckHostedService> logger, IServiceProvider serviceProvider)
-    {
-        _logger = logger;
-        _serviceProvider = serviceProvider;
-    }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
         _logger.LogInformation("HealthCheckHostedService is starting");
 
+        using var timer = new PeriodicTimer(
+            TimeSpan.FromSeconds(SchedulerIntervalSeconds));
+
         try
         {
-            // Main loop that runs while the service is active
-            while (!stoppingToken.IsCancellationRequested)
-            {
-                try
-                {
-                    await PerformScheduledChecksAsync(stoppingToken);
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(ex, "Error occurred in HealthCheckHostedService execution");
-                }
+            // Perform an initial check immediately after startup.
+            await PerformScheduledChecksAsync(stoppingToken);
 
-                // Wait before checking again for targets to monitor
-                await Task.Delay(TimeSpan.FromSeconds(SchedulerIntervalSeconds), stoppingToken);
+            while (await timer.WaitForNextTickAsync(stoppingToken))
+            {
+                await PerformScheduledChecksAsync(stoppingToken);
             }
         }
         catch (OperationCanceledException)
         {
-            _logger.LogInformation("HealthCheckHostedService cancellation requested");
+            _logger.LogInformation(
+                "HealthCheckHostedService cancellation requested");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(
+                ex,
+                "Fatal error occurred in HealthCheckHostedService");
         }
         finally
         {
-            _logger.LogInformation("HealthCheckHostedService has stopped");
+            _logger.LogInformation(
+                "HealthCheckHostedService has stopped");
         }
     }
 
     /// <summary>
-    /// Checks which targets are due for monitoring and performs health checks on them
+    /// Finds targets that are due and performs their health checks.
     /// </summary>
-    private async Task PerformScheduledChecksAsync(CancellationToken cancellationToken)
+    private async Task PerformScheduledChecksAsync(
+        CancellationToken cancellationToken)
     {
         using var scope = _serviceProvider.CreateScope();
-        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-        var healthCheckService = scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
 
-        // Get all active monitoring targets
+        var dbContext =
+            scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+
+        var healthCheckService =
+            scope.ServiceProvider.GetRequiredService<IHealthCheckService>();
+
+        // One database query per scheduler interval instead of every 5 seconds.
         var activeTargets = await dbContext.MonitoringTargets
             .Where(t => t.IsActive)
             .AsNoTracking()
             .ToListAsync(cancellationToken);
 
         var now = DateTime.UtcNow;
-        var checksToPerform = new List<(MonitoringTarget target, IHealthCheckService service)>();
 
-        // Determine which targets are due for checking
-        foreach (var target in activeTargets)
-        {
-            if (!_nextCheckTimes.ContainsKey(target.Id))
-            {
-                // First time checking this target, schedule it immediately
-                _nextCheckTimes[target.Id] = now;
-                checksToPerform.Add((target, healthCheckService));
-                _logger.LogInformation("Scheduled new target {TargetName} (ID: {TargetId}) for immediate health check", target.Name, target.Id);
-            }
-            else if (now >= _nextCheckTimes[target.Id])
-            {
-                // Target is due for checking
-                checksToPerform.Add((target, healthCheckService));
-            }
-        }
+        var activeTargetIds = activeTargets
+            .Select(t => t.Id)
+            .ToHashSet();
 
-        // Remove targets that are no longer active from tracking
-        var inactiveTargetIds = _nextCheckTimes.Keys.Except(activeTargets.Select(t => t.Id)).ToList();
+        // Remove targets that are no longer active.
+        var inactiveTargetIds = _nextCheckTimes.Keys
+            .Where(id => !activeTargetIds.Contains(id))
+            .ToList();
+
         foreach (var targetId in inactiveTargetIds)
         {
             _nextCheckTimes.Remove(targetId);
-            _logger.LogInformation("Removed inactive target (ID: {TargetId}) from scheduler", targetId);
+
+            _logger.LogDebug(
+                "Removed inactive target ID {TargetId} from scheduler",
+                targetId);
         }
 
-        // Perform all scheduled health checks in parallel
-        if (checksToPerform.Count > 0)
+        // Find targets that need to be checked.
+        var checksToPerform = activeTargets
+            .Where(target =>
+                !_nextCheckTimes.TryGetValue(target.Id, out var nextCheck) ||
+                now >= nextCheck)
+            .ToList();
+
+        if (checksToPerform.Count == 0)
         {
-            _logger.LogInformation("Performing {CheckCount} scheduled health checks", checksToPerform.Count);
-
-            var checkTasks = checksToPerform.Select(async (item) =>
-            {
-                var target = item.target;
-                var service = item.service;
-
-                try
-                {
-                    var result = await service.CheckHealthAsync(target.Url, cancellationToken);
-
-                    // Save result to database
-                    var monitoringResult = new MonitoringResult
-                    {
-                        MonitoringTargetId = target.Id,
-                        ResponseTime = result.ResponseTimeMs,
-                        StatusCode = result.StatusCode,
-                        IsHealthy = result.IsHealthy,
-                        CheckedAt = DateTime.UtcNow,
-                        ErrorMessage = result.ErrorMessage
-                    };
-
-                    // Use a new context for saving to avoid conflicts
-                    using var saveScope = _serviceProvider.CreateScope();
-                    var savingDbContext = saveScope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
-                    savingDbContext.MonitoringResults.Add(monitoringResult);
-                    await savingDbContext.SaveChangesAsync(cancellationToken);
-
-                    // Schedule next check for this target
-                    _nextCheckTimes[target.Id] = now.AddSeconds(target.MonitoringInterval);
-
-                    _logger.LogDebug(
-                        "Health check saved for {TargetName} (ID: {TargetId}) | Healthy: {IsHealthy} | NextCheck: {NextCheckTime}",
-                        target.Name,
-                        target.Id,
-                        result.IsHealthy,
-                        _nextCheckTimes[target.Id]
-                    );
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogError(
-                        ex,
-                        "Failed to perform or save health check for target {TargetName} (ID: {TargetId})",
-                        target.Name,
-                        target.Id
-                    );
-                }
-            });
-
-            await Task.WhenAll(checkTasks);
+            return;
         }
+
+        _logger.LogDebug(
+            "Performing {CheckCount} scheduled health checks",
+            checksToPerform.Count);
+
+        // Limit the number of simultaneous health checks.
+        using var semaphore = new SemaphoreSlim(MaxConcurrentChecks);
+
+        var checkTasks = checksToPerform.Select(async target =>
+        {
+            await semaphore.WaitAsync(cancellationToken);
+
+            try
+            {
+                await PerformHealthCheckAsync(
+                    target,
+                    healthCheckService,
+                    cancellationToken);
+            }
+            catch (OperationCanceledException)
+            {
+                throw;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(
+                    ex,
+                    "Failed to perform health check for target {TargetName} (ID: {TargetId})",
+                    target.Name,
+                    target.Id);
+            }
+            finally
+            {
+                semaphore.Release();
+            }
+        });
+
+        await Task.WhenAll(checkTasks);
     }
 
-    public override async Task StopAsync(CancellationToken cancellationToken)
+    /// <summary>
+    /// Performs a health check and saves the result.
+    /// </summary>
+    private async Task PerformHealthCheckAsync(
+        MonitoringTarget target,
+        IHealthCheckService healthCheckService,
+        CancellationToken cancellationToken)
     {
-        _logger.LogInformation("HealthCheckHostedService is stopping");
+        var result = await healthCheckService.CheckHealthAsync(
+            target.Url,
+            cancellationToken);
+
+        var monitoringResult = new MonitoringResult
+        {
+            MonitoringTargetId = target.Id,
+            ResponseTime = result.ResponseTimeMs,
+            StatusCode = result.StatusCode,
+            IsHealthy = result.IsHealthy,
+            CheckedAt = DateTime.UtcNow,
+            ErrorMessage = result.ErrorMessage
+        };
+
+        // Use a separate scope/context for the database write.
+        using var saveScope = _serviceProvider.CreateScope();
+
+        var savingDbContext =
+            saveScope.ServiceProvider
+                .GetRequiredService<ApplicationDbContext>();
+
+        savingDbContext.MonitoringResults.Add(monitoringResult);
+
+        await savingDbContext.SaveChangesAsync(cancellationToken);
+
+        // Schedule the next check based on the target's configured interval.
+        _nextCheckTimes[target.Id] =
+            DateTime.UtcNow.AddSeconds(target.MonitoringInterval);
+
+        _logger.LogDebug(
+            "Health check completed for {TargetName} (ID: {TargetId}) | " +
+            "Healthy: {IsHealthy} | NextCheck: {NextCheckTime}",
+            target.Name,
+            target.Id,
+            result.IsHealthy,
+            _nextCheckTimes[target.Id]);
+    }
+
+    public override async Task StopAsync(
+        CancellationToken cancellationToken)
+    {
+        _logger.LogInformation(
+            "HealthCheckHostedService is stopping");
+
         await base.StopAsync(cancellationToken);
     }
 }
