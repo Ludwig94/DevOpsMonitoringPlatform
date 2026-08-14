@@ -35,7 +35,7 @@ public class MonitoringResult
     /// <summary>
     /// When the check was performed
     /// </summary>
-    public DateTime CheckedAt { get; set; } = DateTime.UtcNow;
+    public DateTimeOffset CheckedAt { get; set; } = DateTimeOffset.UtcNow;
 
     /// <summary>
     /// Error message if the check failed

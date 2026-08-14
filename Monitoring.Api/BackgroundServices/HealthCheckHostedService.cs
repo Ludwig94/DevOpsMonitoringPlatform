@@ -167,7 +167,7 @@ public class HealthCheckHostedService : BackgroundService
             ResponseTime = result.ResponseTimeMs,
             StatusCode = result.StatusCode,
             IsHealthy = result.IsHealthy,
-            CheckedAt = DateTime.UtcNow,
+            CheckedAt = DateTimeOffset.UtcNow,
             ErrorMessage = result.ErrorMessage
         };
 
