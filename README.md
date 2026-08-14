@@ -392,11 +392,34 @@ CORS_ORIGINS                        = https://<your-app>.azurestaticapps.net
 
 ---
 
+## Screenshots
+
+### Dashboard
+
+![Dashboard](Screenshots/Darkmode%20Dashboard.png)
+
+### Monitoring Target
+
+![Add Target](Screenshots/AddTargetPage.png)
+
+### Target Details
+
+![Target Details](Screenshots/DetailsPageUpper.png)
+
+![Target Details - Recent Checks](Screenshots/DetailsPageLower.png)
+
+### Swagger API
+
+![Swagger API](Screenshots/Swagger.png)
+
+---
+
 ## Roadmap
 
 - [x] Docker Compose local stack
 - [x] GitHub Actions CI/CD workflows (frontend + API)
-- [ ] Azure resources provisioned (App Service + Static Web Apps + Azure SQL)
-- [ ] GitHub secrets configured and pipelines live
+- [x] Azure resources provisioned (App Service + Static Web Apps + Azure SQL)
+- [x] GitHub secrets configured and pipelines live
 - [ ] JWT authentication
 - [ ] Email / webhook alerting on target failure
+
