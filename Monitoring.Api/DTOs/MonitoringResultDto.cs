@@ -6,10 +6,16 @@ namespace Monitoring.Api.DTOs;
 public class MonitoringResultDto
 {
     public int Id { get; set; }
+
     public int MonitoringTargetId { get; set; }
+
     public int ResponseTime { get; set; }
+
     public int StatusCode { get; set; }
+
     public bool IsHealthy { get; set; }
+
     public DateTime CheckedAt { get; set; }
+
     public string? ErrorMessage { get; set; }
 }
