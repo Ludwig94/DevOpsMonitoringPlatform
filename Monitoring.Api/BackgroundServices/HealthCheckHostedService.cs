@@ -14,7 +14,7 @@ public class HealthCheckHostedService : BackgroundService
     private readonly ILogger<HealthCheckHostedService> _logger;
     private readonly IServiceProvider _serviceProvider;
 
-    private const int SchedulerIntervalSeconds = 60;
+    private const int SchedulerIntervalSeconds = 300;
     private const int MaxConcurrentChecks = 5;
 
     private readonly Dictionary<int, DateTime> _nextCheckTimes = [];
