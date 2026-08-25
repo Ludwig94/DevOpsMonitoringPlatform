@@ -1,3 +1,21 @@
+.demo-offline {
+  padding: 1.5rem;
+  margin-bottom: 1.5rem;
+  border-radius: 12px;
+  background: rgba(59, 130, 246, 0.08);
+  border: 1px solid rgba(59, 130, 246, 0.25);
+}
+
+.demo-offline h3 {
+  margin: 0 0 0.5rem;
+  font-size: 1.1rem;
+}
+
+.demo-offline p {
+  margin: 0.5rem 0;
+  line-height: 1.5;
+}
+
 .page-header {
   display: flex;
   align-items: center;

@@ -45,7 +45,7 @@ export class DashboardComponent implements OnInit, OnDestroy {
       .subscribe({
         next: (targets) => this.loadSummaries(targets),
         error: () => {
-          this.errorMessage = 'Failed to load monitoring targets. Is the backend running?';
+          this.errorMessage = 'demo-offline';
           this.isLoading = false;
         }
       });
