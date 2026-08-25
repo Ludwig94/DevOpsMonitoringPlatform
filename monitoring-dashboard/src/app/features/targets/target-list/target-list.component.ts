@@ -71,10 +71,10 @@ export class TargetListComponent implements OnInit {
         });
       },
 
-      error: () => {
-        this.errorMessage = 'Failed to load targets.';
-        this.isLoading = false;
-      }
+error: () => {
+  this.errorMessage = 'demo-offline';
+  this.isLoading = false;
+}
     });
   }
 

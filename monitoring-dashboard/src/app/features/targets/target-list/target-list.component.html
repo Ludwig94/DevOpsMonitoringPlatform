@@ -3,8 +3,18 @@
   <a routerLink="/targets/new" class="btn btn-primary">+ Add Target</a>
 </div>
 
-<div class="alert alert-error" *ngIf="errorMessage">{{ errorMessage }}</div>
+<div class="demo-offline" *ngIf="errorMessage === 'demo-offline'">
+  <h3>Live demo currently offline</h3>
 
+  <p>
+    To keep hosting costs low, the monitoring backend is not running continuously.
+  </p>
+
+  <p>
+    <strong>Interested in seeing it in action?</strong>
+    Contact Ludwig Andersson for a live demo.
+  </p>
+</div>
 <div class="loading-container" *ngIf="isLoading">
   <div class="spinner"></div>
   <p>Loading targets...</p>
